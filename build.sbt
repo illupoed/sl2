@@ -23,3 +23,6 @@ libraryDependencies ++= Seq(
 
 // Skip tests during assembly
 test in assembly := {} 
+
+EclipseKeys.withSource := true
+
