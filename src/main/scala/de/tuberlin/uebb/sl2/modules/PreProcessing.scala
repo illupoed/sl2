@@ -34,9 +34,12 @@ import de.tuberlin.uebb.sl2.impl.CombinatorParser
 /**
   * The pre processor for the code generator.
   */
-trait PreProcessing {
+trait PreProcessing
+{
 
-  this: Syntax with SyntaxTraversal with Errors =>  
+	this: Syntax 
+	with SyntaxTraversal 
+	with Errors =>  
     
   val replaceCustomMap = Map ( "\\!" -> "\\$b"
                              , "\\§" -> "\\$h"

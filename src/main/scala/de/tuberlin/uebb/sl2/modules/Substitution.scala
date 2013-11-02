@@ -35,9 +35,13 @@ import scala.collection.immutable.Map.{apply => _, _}
 /**
   * Substitutions for type inference.
   */
-trait Substitution {
+trait Substitution
+{
 
-  this: Syntax with Type with Context with Unification =>
+	this: Syntax 
+	with Type 
+	with Context 
+	with Unification =>
 
   /**
     * Immutable collection of mappings from type variables to types.

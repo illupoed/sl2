@@ -44,10 +44,19 @@ import scala.io.Source
 /*
  * This file module has been superseded by the MultiDriver.	
  */
-trait SimpleDriver extends Driver {
-  self: Parser with CodeGenerator with Syntax with ProgramChecker with JsSyntax
-  	with Errors with SignatureSerializer with DebugOutput with Configs
-  	with ModuleResolver with ModuleNormalizer =>
+trait SimpleDriver extends Driver 
+{
+	self: Parser 
+	with CodeGenerator 
+	with Syntax 
+	with ProgramChecker 
+	with JsSyntax
+  	with Errors 
+  	with SignatureSerializer 
+  	with DebugOutput 
+  	with Configs
+  	with ModuleResolver 
+  	with ModuleNormalizer =>
 
   override def run(inpCfg: Config): Either[Error, String] = {
     val input = inpCfg.sources
@@ -62,6 +71,7 @@ trait SimpleDriver extends Driver {
     val config = inpCfg.copy(mainName = file.getName, mainParent = file.getParentFile, destination = destination)
     val source = scala.io.Source.fromFile(file)
     val code = source.mkString
+    
     source.close()
 
     // parse the syntax

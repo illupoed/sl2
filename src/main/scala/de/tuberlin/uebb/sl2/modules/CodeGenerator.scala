@@ -35,8 +35,14 @@ import java.io.File
 import scala.io.Source
 import scala.language.implicitConversions
 
-trait CodeGenerator {
-  self: Syntax with JsSyntax with Errors with PreProcessing with NameSupply with Graph[VarFirstClass] =>
+trait CodeGenerator
+{
+	self: Syntax 
+	with JsSyntax 
+	with Errors 
+	with PreProcessing 
+	with NameSupply 
+	with Graph[VarFirstClass] =>
 
   //TODO: the original compiler created tmp variables named _0, _1 ... At the moment we create $0, $1 ...
 

@@ -33,9 +33,14 @@ import scala.collection.immutable.List.{ tabulate }
 /**
  * SL types.
  */
-trait Type {
+trait Type 
+{
 
-  this: Syntax with EnrichedLambdaCalculus with Context with Substitution with NameSupply =>
+	this: Syntax 
+	with EnrichedLambdaCalculus 
+	with Context 
+	with Substitution 
+	with NameSupply =>
 
   /**
    * SL type language.

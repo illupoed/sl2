@@ -33,9 +33,13 @@ package de.tuberlin.uebb.sl2.modules
   *
   * Perform context analysis on the program's definitions.
   */
-trait ProgramChecker {
+trait ProgramChecker
+{
 
-  this: Syntax with Context with Errors with ModuleResolver =>
+	this: Syntax 
+	with Context 
+	with Errors 
+	with ModuleResolver =>
 
   sealed case class ProgramHeader(environment: Context, dependencies: List[String])
 

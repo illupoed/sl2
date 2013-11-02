@@ -22,12 +22,15 @@ trait ModuleLinearization
     val source: AbstractFile = null,
     val signature: AbstractFile = null,
     val js: AbstractFile = null,
-    val compile: Boolean = false) {
+    val compile: Boolean = false) 
+  {
     
-    override def equals(obj: Any) = {
-      (obj != null &&
-        obj.isInstanceOf[Module] &&
-        obj.asInstanceOf[Module].name == this.name)
+    override def equals(obj: Any) =
+    {
+    	(	obj != null 
+      	&&	obj.isInstanceOf[Module]
+    	&&	obj.asInstanceOf[Module].name == this.name
+    	)
     }
 
     override def hashCode() = { name.hashCode }
@@ -41,24 +44,32 @@ trait ModuleLinearization
    * creates a module compilation unit object from a file name
    * (can either be from /std)
    */
-  def moduleFromName(name: String, config: Config): Module = {
-    if (name.startsWith(standardLibName+"/")) {
+  def moduleFromName(name: String, config: Config): Module = 
+  {
+    if (name.startsWith(standardLibName+"/")) 
+    {
       // load std/ library from resources directory
       val nameEnd = name.replace(standardLibName+"/", "")
       val stdSource = getLibResource(nameEnd + ".sl")
+      
       if (stdSource == null)
         throw new IOException("Could not find source of standard library: "
           + quote(standardLibUrl + name))
-      Module(nameEnd,
-        createFile(stdSource),
-        createFile(new URL(stdSource.toString + ".signature")),
-        createFile(new URL(stdSource.toString + ".js")))
-    } else {
+      
+      Module( nameEnd
+		  	, createFile(stdSource)
+		  	, createFile(new URL(stdSource.toString + ".signature"))
+		  	, createFile(new URL(stdSource.toString + ".js"))
+		  	)
+    }
+    else
+    {
       // load ordinary files relative to source- and classpath
-      Module(name,
-        createFile(new URL(config.sourcepath.toURI.toURL, name + ".sl")),
-        createFile(new URL(config.classpath.toURI.toURL, name + ".sl.signature")),
-        createFile(new URL(config.classpath.toURI.toURL, name + ".sl.js")))
+      Module( name
+      		, createFile(new URL(config.sourcepath.toURI.toURL, name + ".sl"))
+      		, createFile(new URL(config.classpath.toURI.toURL, name + ".sl.signature"))
+      		, createFile(new URL(config.classpath.toURI.toURL, name + ".sl.js"))
+      		)
     }
   }
 

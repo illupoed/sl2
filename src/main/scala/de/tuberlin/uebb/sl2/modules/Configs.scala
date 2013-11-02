@@ -2,8 +2,9 @@ package de.tuberlin.uebb.sl2.modules
 
 import java.io.File
 
-trait Configs {
-  case class Config(
+trait Configs
+{
+	case class Config(
     /**
      * where to look for source files
      */
@@ -31,5 +32,5 @@ trait Configs {
      * where to put the compiled files from source.
      */
     val destination: File
- )
+					)
 }

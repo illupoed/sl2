@@ -66,7 +66,7 @@ object Main
     with ModuleContextImpl
   	with ModuleLinearization {
 
-  val usage = """Usage: <sl> [-d <destination directory>] [-cp <class-path-directory>] [-h] -sourcepath <source-path> source file(s)"""
+  val usage = """Usage: [-d <destination directory>] [-cp <class-path-directory>] [-h] -sourcepath <source-path> source file(s)"""
   
   val help = usage + """
   -sourcepath root directory for compilation (source files relative 
@@ -76,37 +76,58 @@ object Main
        sourcepath (defaults to sourcepath)
   -h   display this help"""
     
-  def main(args: Array[String]) {
-    if (args.isEmpty) {
-      println(usage)
-    } else if (args.contains("-h")) {
-      println(help)
-    } else {
-      val config = parseArguments(args.toList)
-      if (config.sourcepath == null || config.sources == null || config.sources.isEmpty) {
-        println(usage)
-      } else {
-        val runConfig = config.copy(
-          classpath = Option(config.classpath).getOrElse(config.sourcepath),
-          destination = Option(config.destination).getOrElse(config.sourcepath))
-        val res = run(runConfig)
-        if (res.isLeft)
-          res.left.map(x => println("Errors:\n" + x))
-        else
-          res.right.map(x => println(x))
-      }
-    }
+  def main(args: Array[String]) 
+  {
+  	if (args.isEmpty)
+    {
+  		println(usage)
+    } 
+    else 
+    	if (args.contains("-h")) 
+    	{
+    		println(help)
+    	} 
+    	else
+    	{
+    		val config = parseArguments(args.toList)
+    		
+    		if	(	config.sourcepath == null
+    			||	config.sources == null
+    			||	config.sources.isEmpty
+    			) 
+    		{
+    			println(usage)
+    		}
+    		else
+    		{
+    			val runConfig = config.copy(
+    					classpath = Option(config.classpath).getOrElse(config.sourcepath),
+    					destination = Option(config.destination).getOrElse(config.sourcepath)
+    					)
+    			val res = run(runConfig)
+    			
+    			if (res.isLeft)
+    				res.left.map(x => println("Errors:\n" + x))
+    			else
+    				res.right.map(x => println(x))
+    		}
+    	}
   }
   
-  def parseArguments(args: List[String]): Config = args match {
-  	case "-d" :: dir ::  rt => parseArguments(rt).copy(destination = new File(dir))
-  	case "-cp" :: dir :: rt => parseArguments(rt).copy(classpath = new File(dir))
-  	case "-sourcepath" :: dir :: rt => parseArguments(rt).copy(sourcepath = new File(dir))
-  	case src ::  rt => {
-  		val res = parseArguments(rt)
-  		res.copy(sources = src :: res.sources)
+  def parseArguments(args: List[String]): Config = 
+  {	
+  	args match
+  	{
+	  	case "-d" :: dir ::  rt => parseArguments(rt).copy(destination = new File(dir))
+	  	case "-cp" :: dir :: rt => parseArguments(rt).copy(classpath = new File(dir))
+	  	case "-sourcepath" :: dir :: rt => parseArguments(rt).copy(sourcepath = new File(dir))
+	  	case src ::  rt => 
+	  	{
+	  		val res = parseArguments(rt)
+	  		res.copy(sources = src :: res.sources)
+	  	}
+	    case Nil => defaultConfig
   	}
-    case Nil => defaultConfig
   }
   
   val defaultConfig: Config = Config(null, List(), null, "", new File(""), null)

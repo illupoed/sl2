@@ -53,8 +53,9 @@ import scalax.io._
  * A driver that is able to compile more than one source file
  * at a time, using topological sorting
  */
-trait MultiDriver extends Driver {
-  self: Parser
+trait MultiDriver extends Driver 
+{
+	self: Parser
     with AbstractFile
   	with CodeGenerator
   	with Syntax
@@ -68,40 +69,58 @@ trait MultiDriver extends Driver {
   	with ModuleNormalizer
   	with ModuleLinearization =>
 	
-  override def run(config: Config): Either[Error, String] = {
-    // load all (indirectly) required modules
+  	override def run(config: Config): Either[Error, String] = 
+	{
+	// load all (indirectly) required modules
     val modules = for(src <- config.sources) yield createModuleFromSourceFile(src, config)
     val errors = modules.filter(_.isLeft)
-    if(errors.size > 0)
+    
+    if (errors.size > 0)
     	return Left(ErrorList(errors.map(_.left.get)))
-    val dependencies = loadDependencies(modules, config, Map())    
-    if(dependencies.isLeft) {
+    	
+    val dependencies = loadDependencies(modules, config, Map())
+    
+    if ( dependencies.isLeft )
+    {
     	Left(dependencies.left.get)
-      } else {
+    }
+    else
+    {
     	// sort topologically
 	    val sortedModules = topoSort(dependencies.right.get)
 	    ensureDirExists(config.destination)
+	    
 	    // compile in topological order
-	    val result =(for(modules <- sortedModules.right;
-	    		     results <- errorMap(modules.toSeq.toList,
-	    		    		 		handleSource(_ :Module, config)).right) yield "")
-	    if(result.isLeft) {
-	      result
-	    } else {
-	      Right("compilation successful")
+	    val result = ( for( modules <- sortedModules.right;
+	    		     		results <- errorMap(modules.toSeq.toList,
+	    		    		 		handleSource(_ :Module, config)).right) yield ""
+	    		     )
+	    
+	    if(result.isLeft)
+	    {
+	    	result
+	    }
+	    else
+	    {
+	    	Right("compilation successful")
 	    }
     }
   }
   
-  def createModuleFromSourceFile(fileName: String, config: Config):Either[Error,Module] = {
-    if(fileName endsWith ".sl") {
-      findModuleFromSource(fileName.substring(0, fileName.length-3), config)
-    } else {
-      Left(GenericError("Cannot compile: SL source file "+quote(fileName)+" does not end with suffix .sl"))
+  def createModuleFromSourceFile(fileName: String, config: Config):Either[Error,Module] =
+  {
+    if(fileName endsWith ".sl")
+    {
+    	findModuleFromSource(fileName.substring(0, fileName.length-3), config)
+    }
+    else
+    {
+    	Left(GenericError("Cannot compile: SL source file "+quote(fileName)+" does not end with suffix .sl"))
     }
   }
   
-  def findModules(importedBy: Module, names: List[String], config:Config):Either[Error,List[Module]] = {
+  def findModules(importedBy: Module, names: List[String], config:Config):Either[Error,List[Module]] = 
+  {
     errorMap(names, findModule(importedBy, _: String, config))
   }
   
@@ -118,38 +137,58 @@ trait MultiDriver extends Driver {
    *     file.</li>
    * <li>Otherwise create a module that is not to be compiled.</li>    
    */
-  def findModule(importedBy: Module, name: String, config: Config):Either[Error,Module] = {
-    try {
+  def findModule(importedBy: Module, name: String, config: Config):Either[Error,Module] = 
+  {
+    try 
+    {
 	    val module = moduleFromName(name, config)
-	    if(!module.signature.canRead) {
+	    
+	    if(!module.signature.canRead) 
+	    {
 	    	// no signature file exists
-	    	if(module.source.canRead) {
+	    	if(module.source.canRead)
+	    	{
 	    	    Right(module.copy(compile = true))
-	    	} else {
+	    	}
+	    	else
+	    	{
 	    		Left(FilesNotFoundError("Module "+name+" imported by "+importedBy.name+" not found: ",
 	    				module.source.path, module.signature.path))
 	    	}
-	    } else if(module.source.canRead() &&
-	              (module.source.lastModified() > module.signature.lastModified())) {
-	    	// a signature file exists, as well as a source file
-	        Right(module.copy(compile = true))
-	    } else {
-	    	// a signature, but no source file exists: load from signature
-	    	Right(module)
 	    }
-    } catch {
-      case ioe: IOException => Left(GenericError(ioe.getMessage()))
+	    else 
+	    	if	(	module.source.canRead() 
+	    		&&	(module.source.lastModified() > module.signature.lastModified())
+	    		) 
+	    	{
+	    		// a signature file exists, as well as a source file
+	    		Right(module.copy(compile = true))
+	    	}
+	    	else
+	    	{
+	    		// a signature, but no source file exists: load from signature
+	    		Right(module)
+	    	}
+    }
+    catch
+    {
+    	case ioe: IOException => Left(GenericError(ioe.getMessage()))
     }
   }
   
   /**
    * Create a module to be compiled from its source file.
    */
-  def findModuleFromSource(name: String, config: Config): Either[Error,Module] = {
+  def findModuleFromSource(name: String, config: Config): Either[Error,Module] = 
+  {
     val module = moduleFromName(name, config)
-	if(module.source.canRead) {
+    
+	if ( module.source.canRead )
+	{
 	    Right(module.copy(compile = true))
-	} else {
+	}
+	else
+	{
 		Left(FileNotFoundError(module.source.path))
 	}
   }
@@ -157,15 +196,22 @@ trait MultiDriver extends Driver {
   /**
    * Resolves the direct and transient dependencies of the given modules
    */
-  def loadDependencies(modules: List[Either[Error,Module]], config: Config,
-      dependencies: Map[Module,Set[Module]]):
-      Either[Error,Map[Module,Set[Module]]] = modules match {
-    case Left(e) :: rt => Left(e)
-    case Right(m) :: rt => {
-      val newDeps = loadModuleDependencies(m, config, dependencies)
-      newDeps.right.flatMap(loadDependencies(rt, config, _))
-    }
-    case Nil => Right(dependencies)
+  def loadDependencies
+  	( modules: List[Either[Error,Module]]
+  	, config: Config
+  	, dependencies: Map[Module,Set[Module]]
+  	): Either[Error,Map[Module,Set[Module]]] = 
+  {
+  	modules match
+  	{
+        case Left(e) :: rt => Left(e)
+        case Right(m) :: rt => 
+        {
+        	val newDeps = loadModuleDependencies(m, config, dependencies)
+        	newDeps.right.flatMap(loadDependencies(rt, config, _))
+        }
+        case Nil => Right(dependencies)
+  	}
   }
 
   /**
@@ -175,27 +221,40 @@ trait MultiDriver extends Driver {
    */
   def loadModuleDependencies(module: Module, config: Config,
       dependencies: Map[Module,Set[Module]]):
-      Either[Error, Map[Module,Set[Module]]] = {
-    if((dependencies contains module) || !module.compile) {
-      Right(dependencies)
-    } else {
-      val deps = getDirectDependencies(module, config)
-      if(deps.isLeft) {
-        Left(deps.left.get)
-      } else {
-        val depsR = deps.right.get.filter(_.compile) // ignore dependencies that need no compilation
-        (Right(dependencies + (module -> depsR)).
-            asInstanceOf[Either[Error, Map[Module,Set[Module]]]] /: depsR) {
-          (currDeps, mod) => currDeps.right.flatMap(loadModuleDependencies(mod, config, _))
-        }
-      }
+      Either[Error, Map[Module,Set[Module]]] =
+  {
+    if	(	(dependencies contains module)
+    	||	!module.compile
+    	)
+    {
+    	Right(dependencies)
+    }
+    else
+    {
+    	val deps = getDirectDependencies(module, config)
+      
+    	if(deps.isLeft)
+    	{
+    		Left(deps.left.get)
+    	}
+    	else
+    	{
+    		val depsR = deps.right.get.filter(_.compile) // ignore dependencies that need no compilation
+        
+    		(Right(dependencies + (module -> depsR)).
+    		asInstanceOf[Either[Error, Map[Module,Set[Module]]]] /: depsR) 
+    		{
+    		  (currDeps, mod) => currDeps.right.flatMap(loadModuleDependencies(mod, config, _))
+            }
+    	}
     }
   }
   
   /**
    * finds out the depencies of a given compilation unit
    */
-  def getDirectDependencies(module: Module, config: Config): Either[Error, Set[Module]] = {
+  def getDirectDependencies(module: Module, config: Config): Either[Error, Set[Module]] = 
+  {
     // load input file
     val code = module.source.contents
 
@@ -211,7 +270,8 @@ trait MultiDriver extends Driver {
     ) yield x.toSet
   }
   
-  def handleSource(module: Module, inputConfig: Config) = {
+  def handleSource(module: Module, inputConfig: Config) = 
+  {
     // load input file
     val name = module.name
     println(inputConfig.sources+", "+name)
@@ -238,7 +298,8 @@ trait MultiDriver extends Driver {
     ) yield res
   }
   
-  def compile(name: String, code: String, config: Config): Either[Error, Pair[Program, String]] = {
+  def compile(name: String, code: String, config: Config): Either[Error, Pair[Program, String]] = 
+  {
     val ast = parseAst(code)
 
     val checkResults = for (
@@ -260,30 +321,42 @@ trait MultiDriver extends Driver {
     ) yield (moq, compiled)
   }
   
-  def ensureDirExists(dir: File) = {
+  def ensureDirExists(dir: File) =
+  {
     // Create directory, if necessary
-    if(!dir.exists()) {
-      if(dir.mkdirs()) {
-        println("Created directory "+dir)
-      } else {
-        println("Could not create directory"+dir)
-      }
-    } else if(!dir.isDirectory()) {
-    	println(dir+" is not a directory")
+    if(!dir.exists())
+    {
+    	if(dir.mkdirs()) 
+    	{
+    		println("Created directory "+dir)
+    	}
+    	else
+    	{
+    		println("Could not create directory"+dir)
+    	}
     }
+    else 
+    	if(!dir.isDirectory()) 
+    	{
+    		println(dir+" is not a directory")
+    	}
   }
   
-  def compileSL(src: String, config: Config) = {
+  def compileSL(src: String, config: Config) =
+  {
     for (
       moq_compiled <- compile("inline", src, config).right
     ) yield moq_compiled._2
   }
   
-  def generateMainJsFile(name: String, config: Config) : Either[Error, String] = {
+  def generateMainJsFile(name: String, config: Config) : Either[Error, String] =
+  {
     val mainJs = new File(config.destination, "main.js")
     val libURL = getLibURL(config)
+    
     if(libURL.isLeft)
       return Left(libURL.left.get)
+    
 	val stdURL = JsObject(List((JsName("std"), JsStr(libURL.right.get.toString))))
 	val stdPath = JsObject(List((JsName("std"), JsStr(Paths.get(libURL.right.get.toURI).toString.replace("\\", "/")))))
     val mainWriter = new PrintWriter(mainJs)
@@ -307,7 +380,8 @@ trait MultiDriver extends Driver {
     return Right("generated main")
   }
   
-  def outputToFiles(program: Program, name: String, compiled: String, config: Config): Either[Error, String] = {    
+  def outputToFiles(program: Program, name: String, compiled: String, config: Config): Either[Error, String] = 
+  {   
     val modulesDir = config.destination
     
     // compile js unit file
@@ -328,7 +402,8 @@ trait MultiDriver extends Driver {
     return Right("compilation successful")
   }
   
-  def compileModuleBodyToString(program: Program, name: String, imports: List[ResolvedImport]): Either[Error, String] = {
+  def compileModuleBodyToString(program: Program, name: String, imports: List[ResolvedImport]): Either[Error, String] =
+  {
     val moduleWriter = new StringWriter()
     val compiled = astToJs(program)
     val moduleTemplate = Source.fromURL(getClass().getResource("/js/module_template.js")).getLines.mkString("\n")
@@ -343,8 +418,10 @@ trait MultiDriver extends Driver {
     Right(moduleWriter.toString())
   }
   
-  def insertExternallyImported(name: String, moduleWriter: PrintWriter, imports: List[ResolvedImport]) {
-    for(i <- imports.filter(_.isInstanceOf[ResolvedExternImport])) {
+  def insertExternallyImported(name: String, moduleWriter: PrintWriter, imports: List[ResolvedImport]) 
+  {
+    for(i <- imports.filter(_.isInstanceOf[ResolvedExternImport])) 
+    {
       val imp = i.asInstanceOf[ResolvedExternImport]
       val includedCode = imp.file.contents
       moduleWriter.println("/***********************************/")
@@ -353,71 +430,93 @@ trait MultiDriver extends Driver {
       moduleWriter.println(includedCode)
       moduleWriter.println("/***********************************/")
     }
+    
     moduleWriter.println("/***********************************/")
     moduleWriter.println("// generated from: "+name)
     moduleWriter.println("/***********************************/") 
   }
   
-  def getLibURL(config: Config):Either[Error,URL] = {
-	  val libURL = getClass().getResource("/lib/")
-      if(libURL == null) {
-    	  Left(GenericError("Cannot compile: Standard library "+quote("/lib/")+" not found."))
-      } else {
-	      val libFile = createFile(libURL)
-	      if(libFile.isInstanceOf[BottledFile]) {
+  def getLibURL(config: Config):Either[Error,URL] = 
+  {
+	val libURL = getClass().getResource("/lib/")
+	
+    if(libURL == null) 
+    {
+    	Left(GenericError("Cannot compile: Standard library "+quote("/lib/")+" not found."))
+    }
+    else
+    {
+    	val libFile = createFile(libURL)
+    	
+    	if(libFile.isInstanceOf[BottledFile])
+    	{
 	        val jarName = libFile.asInstanceOf[BottledFile].jarFile
 	        val jar = new java.util.jar.JarFile(jarName)
 	        val libEntry = jar.getJarEntry("/lib/")
 	        val entries = jar.entries
-	        while(entries.hasMoreElements()) {
-	          val entry = entries.nextElement()
-	          if(entry.getName.matches("^lib/.*\\.(signature|js)$")) {
-	        	  copyResource(jar.getInputStream(entry),
+	        
+	        while(entries.hasMoreElements()) 
+	        {
+	        	val entry = entries.nextElement()
+	        	
+	        	if(entry.getName.matches("^lib/.*\\.(signature|js)$")) 
+	        	{
+	        		copyResource(jar.getInputStream(entry),
 	        	      jarName+"!"+entry.getName(),
 	        	      new URI(config.destination.toURI.toString+entry.getName))
-	          }
+	        	}
 	        }
+	        
 	        Right(new File(config.destination, "/lib/").toURI.toURL)
-	      } else {
+	    }
+    	else
+    	{
 	        Right(new File(libFile.path).toURI.toURL)
-	      }
-      }
+    	}
+    }
   }
   
-  def copyResource(resourceName: String, to: URI):Unit = {
+  def copyResource(resourceName: String, to: URI):Unit = 
+  {
     copyResource(getClass().getResourceAsStream(resourceName),
         resourceName, to)
   }
   
-  def copyResource(in: InputStream, inLabel: String, out: URI):Unit = {
-	  val pathOption = scalax.file.Path(out)
-	  if(pathOption.isDefined && !pathOption.get.exists) {
-	    println("Copying "+inLabel+" to "+pathOption.get.path)
+  def copyResource(in: InputStream, inLabel: String, out: URI):Unit = 
+  {
+	val pathOption = scalax.file.Path(out)
+	  
+	if	(	pathOption.isDefined
+		&&	!pathOption.get.exists
+		)
+	{
+		println("Copying "+inLabel+" to "+pathOption.get.path)
 	    pathOption.get.createFile(true, true)
 	    pathOption.get.doCopyFrom(Resource.fromInputStream(in))
-	  }
+	}
   }
 
   def mergeAst(a: Program, b: Program): Either[Error, Program] =
-    {
-      for (
+  {
+	for (
         sigs <- mergeMap(a.signatures, b.signatures).right;
         funs <- mergeMap(a.functionDefs, b.functionDefs).right;
         funsEx <- mergeMap(a.functionDefsExtern, b.functionDefsExtern).right
-      ) yield {
+		) yield 
+	{
         val defs = a.dataDefs ++ b.dataDefs
         Program(List(), sigs, funs, funsEx, defs)
-      }
-
     }
+
+  }
 
   def mergeMap[A, B](a: Map[A, B], b: Map[A, B]): Either[Error, Map[A, B]] =
-    {
+  {
       val intersect = a.keySet & b.keySet
       if (intersect.isEmpty)
-        Right(a ++ b)
+    	  Right(a ++ b)
       else
-        Left(DuplicateError("Duplicated definition: " + intersect.mkString(", "), "", Nil))
-    }
+    	  Left(DuplicateError("Duplicated definition: " + intersect.mkString(", "), "", Nil))
+  }
 }
 
