@@ -89,33 +89,31 @@ object MacroDriver
 	    {
 	    	case Expr(Literal(Constant(sl))) => 
 	    	{
-	    		val assets_dir = "/home/norcain/workspace/sl2-demo/public/"
-	    		val source_dir_single = "sl/"
-	    		val generator_dir = "generated/"
-	    		val source_dir = assets_dir + source_dir_single;
-	    		val filename = generator_dir + md5(showRaw(c)) + ".sl"
+	    		val assets_dir		= "/home/norcain/workspace/sl2-demo/public/sl/"
+	    		val generator_dir	= "generated/"
+	    		val module_name		= md5(showRaw(c))
+	    		val filename		= generator_dir + module_name + ".sl"
 	    		
-	    		val target_file = new File(source_dir + filename);
+	    		val target_file		= new File(assets_dir + filename);
 	    		
 	    		if (target_file.exists())
 	    			target_file.delete()
 	    		
 	    		
-	    		val tmp_file:Output = Resource.fromFile(source_dir + filename)
+	    		val tmp_file:Output = Resource.fromFile(assets_dir + filename)
 	    		
 	    		tmp_file.write(sl.toString)(Codec.UTF8)
 	    		
-	    		val config: Config = Config	( new File(source_dir) // source path
+	    		//build config
+	    		val config: Config = Config	( new File(assets_dir) // source path
 	    									, filename :: List() // sources
 	    									, new File(assets_dir) // class path
 	    									, "" // mainName
 	    									, new File("") // mainParent
 	    									, new File(assets_dir) // destination
+	    									, true // compile for play framework
 	    									)
-	    		//build config
 	    		
-	    		println(config)
-	    									
 	    		val res = run(config)
 	    		
 	    		if (res.isLeft)
@@ -125,7 +123,7 @@ object MacroDriver
 	    			c.abort(c.enclosingPosition, "Error")
 	    		}
 	    		else
-	    			c.Expr(Literal(Constant("alert(\"hallo world\");" + "\n")))
+	    			c.Expr(Literal(Constant(renderRequire(module_name) + "\n")))
 	    	}
 	    	case _ => 
 	    	{
@@ -133,7 +131,7 @@ object MacroDriver
 	    	}
 	    }
 		
-		c.Expr(Literal(Constant("alert(\"hallo world\");" + "\n")))
+		//c.Expr(Literal(Constant("alert(\"hallo world\");" + "\n")))
 	}
 	
 	def md5(input: String): String =
@@ -144,6 +142,22 @@ object MacroDriver
 	}
 	
 	def slci(s : String) = macro macroImpl
+	
+	def renderRequire(module_name: String): String =
+	{
+		String.format(
+"""
+require
+	( [ "generated/%s.sl" ]
+	, function (foo)
+		{
+			foo.$main()
+		}
+	);
+"""
+				, module_name
+				)
+	}
 
 	/*val prelude = Source.fromURL(getClass.getResource("/prelude.sl")).mkString
 	val preludeJs = Source.fromURL(getClass.getResource("/prelude.js")).mkString

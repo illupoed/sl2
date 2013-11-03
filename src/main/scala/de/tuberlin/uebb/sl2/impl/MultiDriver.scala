@@ -281,21 +281,26 @@ trait MultiDriver extends Driver
     val config = inputConfig.copy(mainName = module.source.filename, mainParent = module.source.parent, destination = destination)
     val code = module.source.contents
     
-    for (
-      moq_compiled <- (compile(name, code, config).right);
-      
-      // output to fs
-      res <- {
-        val (moq, compiled) = moq_compiled ;
-        for { res <- outputToFiles(moq, name, compiled, config).right;
-             // create main.js while compiling main unit only if a main function is declared
-             _ <- { if (isMain && moq.functionDefs.contains("main"))
-                       generateMainJsFile(name, config).right
-                    else Right("No Main needed").right
-                  } 
-           } yield res
-      }.right
-    ) yield res
+    for 
+    	( moq_compiled <- (compile(name, code, config).right)
+    	; res <- 
+    		{ // output to fs
+    			val (moq, compiled) = moq_compiled ;
+        
+    			for 
+    			{ 
+    				res <- outputToFiles(moq, name, compiled, config).right;
+    					// create main.js while compiling main unit only if a main function is declared
+    				_ <- 
+    				{
+    					if (isMain && moq.functionDefs.contains("main"))
+    						generateMainJsFile(name, config).right
+    					else 
+    						Right("No Main needed").right
+    				} 
+    			} yield res
+    		}.right
+    	) yield res
   }
   
   def compile(name: String, code: String, config: Config): Either[Error, Pair[Program, String]] = 
