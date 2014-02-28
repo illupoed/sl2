@@ -1,285 +1,226 @@
 /***********************************/
-// included from: /home/ben/Dokumente/compilerbaupraxis/sl2/target/scala-2.10/classes/lib/_prelude.js
+// included from: /home/norcain/workspace/sl2-demo/sl2/target/scala-2.10/classes/lib/_prelude.js
 /***********************************/
 /*
-
  * This basic module is necessary as an import to every SL
-
  * source code. It defines the builtins.
-
  */
 
-
-
 function toArray(x) {
-
     return Array.prototype.slice.call(x);
-
 };
-
-
 
 function liftCurry(f) {
-
     return function () {
-
-	var args = toArray(arguments);
-
-	if (args.length >= f.length) {
-
-	    return f.apply(this, args);
-
-	} else {
-
-	    return curry(f, args, f.length - args.length);
-
-	}
-
+		var args = toArray(arguments);
+		if (args.length >= f.length) {
+			return f.apply(this, args);
+		} else {
+			return curry(f, args, f.length - args.length);
+		}
     } 
-
 };
-
-
 
 function curry(f, args, missing) {
-
     if (args.length<1) {
-
         return f; //nothing to curry with - return function
-
     }
-
-
 
     return function () {
-
-	var nargs = args.concat(toArray(arguments));
-
-	if (arguments.length >= missing) {
-
-	    return f.apply(this, nargs);
-
-	} else {
-
-	    return curry(f, nargs, missing - arguments.length);
-
-	}
-
+		var nargs = args.concat(toArray(arguments));
+		if (arguments.length >= missing) {
+			return f.apply(this, nargs);
+		} else {
+			return curry(f, nargs, missing - arguments.length);
+		}
     }
 
-
-
 };
-
-
 
 function _add(arg1) {
-
     return function(arg2) {
-
-	return arg1 + arg2;
-
+		return arg1 + arg2;
     };
-
 };
-
-
 
 var _adds = _add;
 
-
-
 var _addr = _add;
 
-
-
 function _sub(arg1) {
-
     return function(arg2) {
-
-	return arg1 - arg2;
-
+		return arg1 - arg2;
     };
-
 };
-
-
 
 var _subr = _sub;
 
-
-
 function _mul(arg1) {
-
     return function(arg2) {
-
-	return arg1 * arg2;
-
+		return arg1 * arg2;
     };
-
 };
-
-
 
 var _mulr = _mul;
 
-
-
 function _div(arg1) {
-
     return function(arg2) {
-
-	return Math.floor(arg1 / arg2);
-
+		return Math.floor(arg1 / arg2);
     };
-
 };
-
-
 
 function _divr(arg1) {
-
     return function(arg2) {
-
-	return arg1 / arg2;
-
+		return arg1 / arg2;
     };
-
 };
-
-
-
 
 
 function _eq(l){
-
     return function(r){
-
-	return l == r;
-
+		return l == r;
     };
-
 }
-
-
 
 function _geq(l)
-
 {
-
     return function(r)
-
     {
-
-	return l >= r;
-
+		return l >= r;
     };
-
 }
-
-
 
 function _leq(l)
-
 {
-
     return function(r)
-
     {
-
-	return l <= r;
-
+		return l <= r;
     };
-
 }
-
-
 
 function _lesser(l)
-
 {
-
     return function(r)
-
     {
-
-	return l < r;
-
+		return l < r;
     };
-
 }
-
-
 
 function _greater(l)
-
 {
-
     return function(r)
-
     {
-
-	return l > r;
-
+		return l > r;
     };
-
 }
-
-
 
 function $not(arg) {
-
     return !arg;
-
 }
 
+function $int2Str(arg) {
+    return arg.toString()
+}
 
+function $real2Str(arg) {
+    return arg.toString()
+}
+
+function $char2Str(arg) {
+    return arg
+}
 
 function _yield(r) {
-
   return function() { return r; };
-
 }
-
-
 
 function _bind(l) {
-
   return function(r) {
-
       return function() {
-
 	  /* l is a monad yielding a value, so evaluate l*/
-
-	  var lv = l();
-
+	  	var lv = l();
 	  /* r is a function yielding a monad, evaluate r and then the result */
-
-	  return r(lv)();
-
+	  	return r(lv)();
       }
-
   };
-
 }
-
-
 
 function _bindnr(l) {
-
   return function(r) {
-
       return function() {
-
-	  var lv = l();
-
-	  return r();
-
+	  	var lv = l();
+	  	return r();
       };
-
   };
+}
+
+function _js_check_isNumber(t) {
+	return toString.call(t) === "[object Number]";
+}
+
+function _js_check_isString(t) {
+	return toString.call(t) === "[object String]";
+}
+
+function _js_check_isBoolean(t) {
+	return toString.call(t) === "[object Boolean]";
+}
+
+function _isString(t) {
+	if (_js_check_isString(t))
+		return t;
+	else
+		throw "Result of {|  |} is not a String!";
+}
+
+function _isBoolean(t) {
+	if (_js_check_isBoolean(t))
+		return t;
+	else
+		throw "Result of {|  |} is not a Boolean!";
 
 }
+
+function _isChar(t) {
+	if (_js_check_isString(t) && t.length === 1)
+		return t;
+	else
+		throw "Result of {|  |} is not a Char!";
+}
+
+function _isReal(t) {
+	if (_js_check_isNumber(t))
+		return t;
+	else
+		throw "Result of {|  |} is not a Real!";
+}
+
+function _isInt(t) {
+	if (_js_check_isNumber(t) && t === Math.floor(t))
+		return t;
+	else
+		throw "Result of {|  |} is not a Int!";
+}
+
+function _check(what)
+{
+	if (typeof window["_is" + what] == 'function') // try to find an appropriate checker function
+		return function (to_test)
+    		{
+        		return window["_is" + what](to_test())
+			}
+	else
+		return function (to_test) // unknown type. return the result without check
+			{
+				return to_test();
+			}	
+}
+
+
+
+
+
+
 
 /***********************************/
 /***********************************/
@@ -313,17 +254,11 @@ exports.$False = false;
 var $stringToInt = parseInt;
 var $charToInt = function(c){return c.charCodeAt(0);};
 var $stringGetChar = function(s){return function(i){
-
 	if (s.length < i) {
-
 		throw "stringGetChar failed: Char index out of bounds"
-
 	} else {
-
 		return s.charAt(i);
-
 	}
-
 }};
 var $strEq = _eq;
 var $charToString = function(c){return c;};
