@@ -33,7 +33,8 @@ import scala.language.postfixOps
 /**
  * Check function definitions for correctness.
  */
-trait FDCheckerImpl extends FDChecker {
+trait FDCheckerImpl
+    extends FDChecker {
 
   this: Lexic with Syntax with Context with Type with Errors =>
 
@@ -46,114 +47,119 @@ trait FDCheckerImpl extends FDChecker {
    *
    * @return Definitions and signatures of all top-level functions
    */
-  override def checkFunctions(in: AST):
-	  Either[Error, FDCheckResult] = in match {
-    case Program(imports, funSigs, funDefs, funDefsExtern, _, _) => {
-      val funQualifiedDefs = funDefs.toList.map({case (name,body) => (Syntax.Var(name), body)}).toMap
-      val funQualifiedSigs = funSigs.toList.map({case (name,sig) => (Syntax.Var(name), sig)}).toMap
-      val funQualifiedDefsExt = funDefsExtern.toList.map({case (name,body) => (Syntax.Var(name), body)}).toMap
-      val undeclaredExterns = funDefsExtern.filter{case (name, eDef) => !funSigs.isDefinedAt(name)}
-      if (!undeclaredExterns.isEmpty) {
+  override def checkFunctions( in: AST ): Either[Error, FDCheckResult] = in match {
+    case Program( imports, funSigs, funDefs, funDefsExtern, _, _ ) => {
+      val funQualifiedDefs = funDefs.toList.map( { case ( name, body ) => ( Syntax.Var( name ), body ) } ).toMap
+      val funQualifiedSigs = funSigs.toList.map( { case ( name, sig ) => ( Syntax.Var( name ), sig ) } ).toMap
+      val funQualifiedDefsExt = funDefsExtern.toList.map( { case ( name, body ) => ( Syntax.Var( name ), body ) } ).toMap
+      val undeclaredExterns = funDefsExtern.filter { case ( name, eDef ) => !funSigs.isDefinedAt( name ) }
+      if ( !undeclaredExterns.isEmpty ) {
         val undeclaredWittness = undeclaredExterns.head
-        Left(AttributedError("External definition of " + quote(undeclaredWittness._1) +
-            " lacks an explicit declaration.", undeclaredWittness._2.attribute))
-      } else {
-      val externContext: Context = funDefsExtern.map {
-          case (name, eDef) => (Syntax.Var(name).asInstanceOf[VarFirstClass] ->
-            astToType(funSigs(name).typ))
+        Left( AttributedError( "External definition of " + quote( undeclaredWittness._1 ) +
+          " lacks an explicit declaration.", undeclaredWittness._2.attribute ) )
+      }
+      else {
+        val externContext: Context = funDefsExtern.map {
+          case ( name, eDef ) => ( Syntax.Var( name ).asInstanceOf[VarFirstClass] ->
+            astToType( funSigs( name ).typ ) )
         }
-      for (_ <- checkFunctions(funQualifiedDefs, funQualifiedDefsExt, funQualifiedSigs).right)
-        yield FDCheckResult(funQualifiedSigs, funQualifiedDefs, externContext)
+        for ( _ <- checkFunctions( funQualifiedDefs, funQualifiedDefsExt, funQualifiedSigs ).right )
+          yield FDCheckResult( funQualifiedSigs, funQualifiedDefs, externContext )
       }
     }
   }
-
-  def checkCompleteImplementation(funDefs: Map[Var, List[FunctionDef]], funDefsExt: Map[Var, FunctionDefExtern], funSigs: Map[Var, FunctionSig]): Either[Error, Unit] = {
+  
+  /**
+   * undocumented
+   */
+  def checkCompleteImplementation( funDefs: Map[Var, List[FunctionDef]], funDefsExt: Map[Var, FunctionDefExtern], funSigs: Map[Var, FunctionSig] ): Either[Error, Unit] = {
     val unimplemented = funSigs -- funDefs.keySet -- funDefsExt.keySet
-    def mkErrors(funSigs: Map[Var, FunctionSig]): List[Error] =
-      for ( sig <- funSigs.toList ) yield (sig match {
-        case (name, FunctionSig(_, _, attr)) =>
-          NotImplementedError("unimplemented function signature", name.toString, attr)
-      })
+      def mkErrors( funSigs: Map[Var, FunctionSig] ): List[Error] =
+        for ( sig <- funSigs.toList ) yield ( sig match {
+          case ( name, FunctionSig( _, _, attr ) ) =>
+            NotImplementedError( "unimplemented function signature", name.toString, attr )
+        } )
 
-    if (unimplemented.isEmpty)
+    if ( unimplemented.isEmpty )
       Right()
     else
-      Left(ErrorList(mkErrors(unimplemented).toList))
+      Left( ErrorList( mkErrors( unimplemented ).toList ) )
   }
 
   /**
    * Check a program's top-level function definitions.
    */
-  def checkFunctions(funDefs: Map[Var, List[FunctionDef]], funDefsExt: Map[Var, FunctionDefExtern], funSigs: Map[Var, FunctionSig]): Either[Error, Unit] = {
+  def checkFunctions( funDefs: Map[Var, List[FunctionDef]], funDefsExt: Map[Var, FunctionDefExtern], funSigs: Map[Var, FunctionSig] ): Either[Error, Unit] = {
     for (
-      _ <- checkArities(funDefs, funSigs).right;
-      _ <- checkDuplicatePatVars(funDefs).right;
-      _ <- checkCompleteImplementation(funDefs, funDefsExt, funSigs).right
+      _ <- checkArities( funDefs, funSigs ).right;
+      _ <- checkDuplicatePatVars( funDefs ).right;
+      _ <- checkCompleteImplementation( funDefs, funDefsExt, funSigs ).right
     ) yield ()
   }
 
   /**
    * Check that all clauses of a function have the same arity as the signature (if given).
    */
-  def checkArities(funDefs: Map[Var, List[FunctionDef]], funSigs: Map[Var, FunctionSig]): Either[Error, Unit] = {
+  def checkArities( funDefs: Map[Var, List[FunctionDef]], funSigs: Map[Var, FunctionSig] ): Either[Error, Unit] = {
 
-    def checkArities(funName: Var, defs: List[FunctionDef]): Either[Error, Unit] = {
-      val arguments = defs map (_.patterns.length)
-      val allEqual = (args: List[Int]) => args.distinct.length == 1
-      val matchingSig = funSigs.get(funName) match {
-        case None => true
-        case Some(sig) => sig.typ.arity == arguments.head
-      }
+      def checkArities( funName: Var, defs: List[FunctionDef] ): Either[Error, Unit] = {
+        val arguments = defs map ( _.patterns.length )
+        val allEqual = ( args: List[Int] ) => args.distinct.length == 1
+        val matchingSig = funSigs.get( funName ) match {
+          case None => true
+          case Some( sig ) => sig.typ.arity == arguments.head
+        }
 
-      if (!allEqual(arguments)) {
-        val attribute = defs.head.attribute
-        val message = "Definitions of " + quote(funName.toString) + " have different arities."
-        Left(AttributedError(message, attribute))
-      } else if (!matchingSig) {
-	    /*
+        if ( !allEqual( arguments ) ) {
+          val attribute = defs.head.attribute
+          val message = "Definitions of " + quote( funName.toString ) + " have different arities."
+          Left( AttributedError( message, attribute ) )
+        }
+        else if ( !matchingSig ) {
+          /*
 		 * If a type signature is given for this function definition, we hint on
 		 * the position of the signature. Otherwise we take the position of the
 		 * first function definition.
 		 */
-        val attribute = funSigs.get(funName).map(_.attribute).getOrElse(defs.head.attribute)
-        val message = "Signature and definition of "+ quote(funName.toString) +" have different arities."
-        Left(AttributedError(message, attribute))
-      } else Right()
-    }
+          val attribute = funSigs.get( funName ).map( _.attribute ).getOrElse( defs.head.attribute )
+          val message = "Signature and definition of " + quote( funName.toString ) + " have different arities."
+          Left( AttributedError( message, attribute ) )
+        }
+        else Right()
+      }
 
-    for (_ <- errorMap(funDefs.toList, checkArities _ tupled).right)
+    for ( _ <- errorMap( funDefs.toList, checkArities _ tupled ).right )
       yield ()
   }
 
   /**
    * Check for duplicate pattern variables in function definitions.
    */
-  def checkDuplicatePatVars(funDefs: Map[Var, List[FunctionDef]]): Either[Error, Unit] = {
+  def checkDuplicatePatVars( funDefs: Map[Var, List[FunctionDef]] ): Either[Error, Unit] = {
 
     val defs: List[FunctionDef] = funDefs.values.flatten.toList
 
-    def checkDuplicatePatVars(funDef: FunctionDef): Either[Error, Unit] = {
-      val patternVars = funDef.patterns.flatMap(varsList)
-      val duplicateVars = findDuplicates(patternVars)
+      def checkDuplicatePatVars( funDef: FunctionDef ): Either[Error, Unit] = {
+        val patternVars = funDef.patterns.flatMap( varsList )
+        val duplicateVars = findDuplicates( patternVars )
 
-      def handleDuplicateVars(v: VarName): Error = {
-        val message = "Duplicate pattern variable " + quote(v) + " in function definition."
-        AttributedError(message, funDef.attribute)
+          def handleDuplicateVars( v: VarName ): Error = {
+            val message = "Duplicate pattern variable " + quote( v ) + " in function definition."
+            AttributedError( message, funDef.attribute )
+          }
+
+        if ( duplicateVars.length > 0 ) Left( ErrorList( duplicateVars map handleDuplicateVars ) )
+        else Right()
       }
 
-      if (duplicateVars.length > 0) Left(ErrorList(duplicateVars map handleDuplicateVars))
-      else Right()
-    }
-
-    for (_ <- errorMap(defs, checkDuplicatePatVars).right)
+    for ( _ <- errorMap( defs, checkDuplicatePatVars ).right )
       yield ()
   }
 
   /**
    * Select all elements occurring two ore more times in the given list.
    */
-  private def findDuplicates[T](list: List[T]): List[T] = {
-    list.filter { (e: T) => list.count(_ == e) >= 2 }.distinct
+  private def findDuplicates[T]( list: List[T] ): List[T] = {
+    list.filter { ( e: T ) => list.count( _ == e ) >= 2 }.distinct
   }
 }

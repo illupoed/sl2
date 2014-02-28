@@ -38,5 +38,5 @@ trait TypeChecker {
   /**
    * Type inference on the enriched lambda calculus.
    */
-  def checkTypes(ctx: Context, e: ELC): Either[Error, Type]
+  def checkTypes( ctx: Context, e: ELC ): Either[Error, Type]
 }

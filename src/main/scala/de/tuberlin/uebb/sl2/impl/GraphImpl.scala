@@ -28,78 +28,75 @@
 
 package de.tuberlin.uebb.sl2.impl
 
-import org.jgrapht.{DirectedGraph}
-import org.jgrapht.graph.{DefaultDirectedGraph, DefaultEdge}
-import org.jgrapht.traverse.{TopologicalOrderIterator}
-import org.jgrapht.alg.{StrongConnectivityInspector}
+import org.jgrapht.{ DirectedGraph }
+import org.jgrapht.graph.{ DefaultDirectedGraph, DefaultEdge }
+import org.jgrapht.traverse.{ TopologicalOrderIterator }
+import org.jgrapht.alg.{ StrongConnectivityInspector }
 
 import de.tuberlin.uebb.sl2.modules.Graph
 
 import scala.collection.JavaConversions._
 
 /**
-  * Wrapper for the JGraphT library
-  */
-trait GraphImpl[T] extends Graph[T]{
+ * Wrapper for the JGraphT library
+ */
+trait GraphImpl[T] extends Graph[T] {
 
   type Graph = DirectedGraph[T, DefaultEdge]
 
-
   /**
-    * Construct a directed graph from a list of vertices and a list of edges.
-    */
-  def directedGraph(vertices: Set[T], edges: List[(T,T)]): Graph = {
-    val graph = new DefaultDirectedGraph[T, DefaultEdge](classOf[DefaultEdge])
+   * Construct a directed graph from a list of vertices and a list of edges.
+   */
+  def directedGraph( vertices: Set[T], edges: List[( T, T )] ): Graph = {
+    val graph = new DefaultDirectedGraph[T, DefaultEdge]( classOf[DefaultEdge] )
 
     // add all vertices
-    for (vertex <- vertices) {
-      graph.addVertex(vertex)
+    for ( vertex <- vertices ) {
+      graph.addVertex( vertex )
     }
 
     // add all edges
-    for ( (from, to) <- edges ) {
-      graph.addEdge(from, to)
+    for ( ( from, to ) <- edges ) {
+      graph.addEdge( from, to )
     }
 
     graph
   }
 
-  
   /**
-    * Determine the strongly connected components of the given graph.
-    */
-  def stronglyConnectedComponents(graph: Graph): Map[T, Set[T]] = {
+   * Determine the strongly connected components of the given graph.
+   */
+  def stronglyConnectedComponents( graph: Graph ): Map[T, Set[T]] = {
 
     import scala.collection.JavaConversions._
 
-    val sccs = new StrongConnectivityInspector(graph).stronglyConnectedSets() map (Set() ++ _)
-    
-    Map() ++ (for (scc <- sccs ; v <- scc) yield (v -> scc))
+    val sccs = new StrongConnectivityInspector( graph ).stronglyConnectedSets() map ( Set() ++ _ )
+
+    Map() ++ ( for ( scc <- sccs; v <- scc ) yield ( v -> scc ) )
   }
 
-
   /**
-    * Sort a list of strongly connected components in topological order.
-    *
-    * @param sccs     Strongly connected components
-    * param baseGraph The graph the strongly connected components stem from
-    */
-  def topologicalSort(sccs: Map[T, Set[T]], baseGraph: Graph): List[Set[T]] = {
-    
-    val graph = new DefaultDirectedGraph[Set[T], DefaultEdge](classOf[DefaultEdge])
+   * Sort a list of strongly connected components in topological order.
+   *
+   * @param sccs     Strongly connected components
+   * param baseGraph The graph the strongly connected components stem from
+   */
+  def topologicalSort( sccs: Map[T, Set[T]], baseGraph: Graph ): List[Set[T]] = {
 
-    for(scc <- sccs.values) {
-      graph.addVertex(scc)
+    val graph = new DefaultDirectedGraph[Set[T], DefaultEdge]( classOf[DefaultEdge] )
+
+    for ( scc <- sccs.values ) {
+      graph.addVertex( scc )
     }
 
-    for(e <- baseGraph.edgeSet) {
-      val src = sccs(baseGraph.getEdgeTarget(e))
-      val trgt = sccs(baseGraph.getEdgeSource(e))
-      if (src != trgt)
-        graph.addEdge(src, trgt)
+    for ( e <- baseGraph.edgeSet ) {
+      val src = sccs( baseGraph.getEdgeTarget( e ) )
+      val trgt = sccs( baseGraph.getEdgeSource( e ) )
+      if ( src != trgt )
+        graph.addEdge( src, trgt )
     }
 
-    val iter = new TopologicalOrderIterator[Set[T], DefaultEdge](graph)
+    val iter = new TopologicalOrderIterator[Set[T], DefaultEdge]( graph )
 
     List() ++ iter
   }

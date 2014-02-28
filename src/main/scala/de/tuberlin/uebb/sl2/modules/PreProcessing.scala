@@ -32,65 +32,65 @@ import org.kiama.rewriting.Rewriter._
 import de.tuberlin.uebb.sl2.impl.CombinatorParser
 
 /**
-  * The pre processor for the code generator.
-  */
-trait PreProcessing
-{
+ * The pre processor for the code generator.
+ */
+trait PreProcessing {
 
-	this: Syntax 
-	with SyntaxTraversal 
-	with Errors =>  
-    
-  val replaceCustomMap = Map ( "\\!" -> "\\$b"
-                             , "\\§" -> "\\$h"
-                             , "\\%" -> "\\$r"
-                             , "\\&" -> "\\$a"
-                             , "\\/" -> "\\$d"
-                             , "\\=" -> "\\$e"
-                             , "\\?" -> "\\$q"
-                             , "\\+" -> "\\$p"
-                             , "\\*" -> "\\$t"
-                             , "\\#" -> "\\$s"
-                             , "\\-" -> "\\$m"
-                             , "\\:" -> "\\$c"
-                             , "\\<" -> "\\$l"
-                             , "\\>" -> "\\$g"
-                             , "\\|" -> "\\$i"
-                             , "\\." -> "__"
-                             )    
-  
+  this: Syntax with SyntaxTraversal with Errors =>
+
+  val replaceCustomMap = Map(
+    "\\!" -> "\\$b",
+    "\\§" -> "\\$h",
+    "\\%" -> "\\$r",
+    "\\&" -> "\\$a",
+    "\\/" -> "\\$d",
+    "\\=" -> "\\$e",
+    "\\?" -> "\\$q",
+    "\\+" -> "\\$p",
+    "\\*" -> "\\$t",
+    "\\#" -> "\\$s",
+    "\\-" -> "\\$m",
+    "\\:" -> "\\$c",
+    "\\<" -> "\\$l",
+    "\\>" -> "\\$g",
+    "\\|" -> "\\$i",
+    "\\." -> "__"
+  )
 
   /**
-    * Rename the identifiers in the given abstract syntax tree, if necessary.
-    */
-  def renameIdentifier(a: AST): AST = {
-    val f : PartialFunction[String, String] = {case s: String => escapeJsIde(s)}
-    map(f, a)
+   * Rename the identifiers in the given abstract syntax tree, if necessary.
+   */
+  def renameIdentifier( a: AST ): AST = {
+    val f: PartialFunction[String, String] = { case s: String => escapeJsIde( s ) }
+    map( f, a )
   }
-  
-  /**
-    * Preprocessing step of the code generator.
-    *
-    * This method renames all identifiers in the given abstract syntax tree
-    * into valid JavaScript identifiers.
-    */
-  def preprocessing(a: AST): AST = renameIdentifier(a)
 
   /**
-    * Escape an identifier.
-    *
-    * This method yields valid JavaScript identifiers for all SL identifiers.
-    */
-  def escapeJsIde(x: String): String = {
+   * Preprocessing step of the code generator.
+   *
+   * This method renames all identifiers in the given abstract syntax tree
+   * into valid JavaScript identifiers.
+   */
+  def preprocessing( a: AST ): AST = renameIdentifier( a )
+
+  /**
+   * Escape an identifier.
+   *
+   * This method yields valid JavaScript identifiers for all SL identifiers.
+   */
+  def escapeJsIde( x: String ): String = {
     var a = x
- 
+
     replaceCustomMap.foreach {
-      case (k, v) => a = a.replaceAll(k, v)
+      case ( k, v ) => a = a.replaceAll( k, v )
     }
-    
-    if (a(0) == '$' || a(0) == '_') a
+
+    if ( a( 0 ) == '$' || a( 0 ) == '_' ) a
     else "$" + a
   }
-  
-  def $ (x: String): String = escapeJsIde(x)
+
+  /**
+   * undocumented
+   */
+  def $( x: String ): String = escapeJsIde( x )
 }

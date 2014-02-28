@@ -29,25 +29,24 @@
 package de.tuberlin.uebb.sl2.modules
 
 /**
-  * The pattern matching trait.
-  */
+ * The pattern matching trait.
+ */
 trait PatternMatching {
 
-  this : Syntax  =>
+  this: Syntax =>
 
-  sealed case class Equation(pattern : List[Pattern], rhs : Expr)
+  sealed case class Equation( pattern: List[Pattern], rhs: Expr )
 
-
-  sealed case class PatternMatchingCtxt(arity : ConVar => Int, 
-                                       constructors : ConVar => Set[ConVar],
-                                       k : Int)
+  sealed case class PatternMatchingCtxt( arity: ConVar => Int,
+                                         constructors: ConVar => Set[ConVar],
+                                         k: Int )
 
   /**
-    * Transform an arbitrary set of pattern equations into a simple CASE expression:
-    * CASE Expr OF Con u1 ... u_n THEN Expr
-    * (the resulting case expression may not contain nested patterns)
-    */
-  def createSimpleCaseMatch(ctxt : PatternMatchingCtxt, 
-                            in : List[Equation], variables : List[Var]) : Expr
+   * Transform an arbitrary set of pattern equations into a simple CASE expression:
+   * CASE Expr OF Con u1 ... u_n THEN Expr
+   * (the resulting case expression may not contain nested patterns)
+   */
+  def createSimpleCaseMatch( ctxt: PatternMatchingCtxt,
+                             in: List[Equation], variables: List[Var] ): Expr
 
 }

@@ -51,16 +51,16 @@ trait Lexic {
   val stolLex = "stol"
   val ltosLex = "ltos"
 
-  val arithOps = List(addLex, subLex, mulLex, divLex)
-  val cmpOps = List(ltLex, leLex, eqLex, neLex, geLex, gtLex)
-  val monadicOps = List(yieldLex, bindLex, bindNRLex)
-  val stringOps = List(stolLex, ltosLex)
+  val arithOps = List( addLex, subLex, mulLex, divLex )
+  val cmpOps = List( ltLex, leLex, eqLex, neLex, geLex, gtLex )
+  val monadicOps = List( yieldLex, bindLex, bindNRLex )
+  val stringOps = List( stolLex, ltosLex )
   val predefinedOps = monadicOps ++ arithOps ++ cmpOps ++ stringOps
 
   val ordLex = "ord"
   val chrLex = "chr"
 
-  val predefinedFuns = (predefinedOps ++ List(ordLex, chrLex)).map(Syntax.Var(_))
+  val predefinedFuns = ( predefinedOps ++ List( ordLex, chrLex ) ).map( Syntax.Var( _ ) )
 
   /* Keywords and symbols */
   val defLex = "DEF"
@@ -78,8 +78,8 @@ trait Lexic {
   val publicLex = "PUBLIC"
   val asLex = "AS"
 
-  val keywords = List(defLex, dataLex, ifLex, thenLex, elseLex,
-    caseLex, ofLex, letLex, inLex, funLex, importLex, externLex, publicLex, asLex)
+  val keywords = List( defLex, dataLex, ifLex, thenLex, elseLex,
+    caseLex, ofLex, letLex, inLex, funLex, importLex, externLex, publicLex, asLex )
 
   val dotLex = "."
   val funEqLex = "="
@@ -103,7 +103,7 @@ trait Lexic {
   val domLex = "DOM"
   val voidLex = "Void"
 
-  val predefinedTypes = List(intLex, charLex, strLex, domLex, voidLex).map(Syntax.TConVar(_))
+  val predefinedTypes = List( intLex, charLex, strLex, domLex, voidLex ).map( Syntax.TConVar( _ ) )
 
   /* Predefined constructors (list and bool) */
   val listLex = "List"
@@ -112,5 +112,5 @@ trait Lexic {
   val trueLex = "True"
   val falseLex = "False"
 
-  val predefCons = List(listLex, consLex, nilLex, trueLex, falseLex).map(Syntax.ConVar(_))
+  val predefCons = List( listLex, consLex, nilLex, trueLex, falseLex ).map( Syntax.ConVar( _ ) )
 }

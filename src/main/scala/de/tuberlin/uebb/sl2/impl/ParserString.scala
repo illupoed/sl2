@@ -29,13 +29,31 @@
 package de.tuberlin.uebb.sl2.impl
 
 /**
-  * Custom String implementation to be used in the parser.
-  */
-class ParserString(contents: String, offset: Int, length: Int) extends CharSequence {
-  def this(contents: String) = this(contents, 0, contents.length())
+ * Custom String implementation to be used in the parser.
+ */
+class ParserString( contents: String, offset: Int, length: Int ) extends CharSequence {
+  /**
+   * undocumented
+   */
+  def this( contents: String ) = this( contents, 0, contents.length() )
 
+  /**
+   * undocumented
+   */
   override def length(): Int = length
-  override def charAt(index: Int): Char = contents.charAt(index + offset)
-  override def subSequence(start: Int, end: Int): CharSequence = new ParserString(contents, offset + start, end - start)
-  override def toString(): String = contents.substring(offset, offset + length)
+
+  /**
+   * undocumented
+   */
+  override def charAt( index: Int ): Char = contents.charAt( index + offset )
+
+  /**
+   * undocumented
+   */
+  override def subSequence( start: Int, end: Int ): CharSequence = new ParserString( contents, offset + start, end - start )
+
+  /**
+   * undocumented
+   */
+  override def toString(): String = contents.substring( offset, offset + length )
 }

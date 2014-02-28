@@ -29,29 +29,27 @@
 package de.tuberlin.uebb.sl2.modules
 
 /**
-  * A simple Graph interface.
-  */
+ * A simple Graph interface.
+ */
 trait Graph[T] {
 
   type Graph
 
   /**
-    * Construct a directed graph from a list of vertices and a list of edges.
-    */
-  def directedGraph(vertices: Set[T], edges: List[(T,T)]): Graph
-
-  
-  /**
-    * Determine the strongly connected components of the given graph.
-    */
-  def stronglyConnectedComponents(graph: Graph): Map[T, Set[T]]
-
+   * Construct a directed graph from a list of vertices and a list of edges.
+   */
+  def directedGraph( vertices: Set[T], edges: List[( T, T )] ): Graph
 
   /**
-    * Sort a list of strongly connected components in topological order.
-    *
-    * @param sccs      Strongly connected components
-    * @param baseGraph The graph the strongly connected components stem from
-    */
-  def topologicalSort(sccs: Map[T, Set[T]], baseGraph: Graph): List[Set[T]]
+   * Determine the strongly connected components of the given graph.
+   */
+  def stronglyConnectedComponents( graph: Graph ): Map[T, Set[T]]
+
+  /**
+   * Sort a list of strongly connected components in topological order.
+   *
+   * @param sccs      Strongly connected components
+   * @param baseGraph The graph the strongly connected components stem from
+   */
+  def topologicalSort( sccs: Map[T, Set[T]], baseGraph: Graph ): List[Set[T]]
 }

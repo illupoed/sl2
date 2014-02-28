@@ -44,54 +44,66 @@ trait Unification {
      * Left hand side of an equation.
      */
     def leftHandSide: Type = this match {
-      case Unifiable(lhs, _) => lhs
-      case MoreGeneralThan(lhs, _) => lhs
+      case Unifiable( lhs, _ ) => lhs
+      case MoreGeneralThan( lhs, _ ) => lhs
     }
 
     /**
      * Right hand side of an equation.
      */
     def rightHandSide: Type = this match {
-      case Unifiable(_, rhs) => rhs
-      case MoreGeneralThan(_, rhs) => rhs
+      case Unifiable( _, rhs ) => rhs
+      case MoreGeneralThan( _, rhs ) => rhs
     }
 
     /**
      * Apply the function `f` to the left and
      * the right hand side of this equation.
      */
-    def map(f: Type => Type) = this match {
-      case Unifiable(lhs, rhs) => Unifiable(f(lhs), f(rhs))
-      case MoreGeneralThan(lhs, rhs) => MoreGeneralThan(f(lhs), f(rhs))
+    def map( f: Type => Type ) = this match {
+      case Unifiable( lhs, rhs ) => Unifiable( f( lhs ), f( rhs ) )
+      case MoreGeneralThan( lhs, rhs ) => MoreGeneralThan( f( lhs ), f( rhs ) )
     }
   }
 
   /**
    * Both types are unifiable.
    */
-  case class Unifiable(lhs: Type, rhs: Type) extends Equation
+  case class Unifiable( lhs: Type, rhs: Type ) extends Equation
 
   /**
    * Both types are unifiable and the right hand side of the
    * equation is less general than the left hand side.
    */
-  case class MoreGeneralThan(lhs: Type, rhs: Type) extends Equation
+  case class MoreGeneralThan( lhs: Type, rhs: Type ) extends Equation
 
   /**
    * Class providing some convenience methods to create equations.
    */
-  implicit class EquationSugar(s: Type) {
-    def :==:(t: Type) = Unifiable(s, t)
-    def :>=:(t: Type) = MoreGeneralThan(s, t)
+  implicit class EquationSugar( s: Type ) {
+
+    /**
+     * undocumented
+     */
+    def :==:( t: Type ) = Unifiable( s, t )
+
+    /**
+     * undocumented
+     */
+    def :>=:( t: Type ) = MoreGeneralThan( s, t )
   }
 
   /**
    * Generate a list of equations based on a list of functions constructing
    * equations and the corresponding left-hand and right-hand sides.
    */
-  implicit class EquationBuilder(builders: List[Function2[Type, Type, Equation]]) {
-    def apply(leftHandSides: List[Type], rightHandSides: List[Type]): List[Equation] = {
-      (builders, leftHandSides, rightHandSides).zipped map (_(_, _))
+  implicit class EquationBuilder( builders: List[Function2[Type, Type, Equation]] ) {
+
+    /**
+     * undocumented
+     */
+    def apply( leftHandSides: List[Type], rightHandSides: List[Type] ): List[Equation] = {
+      ( builders, leftHandSides, rightHandSides ).zipped map ( _( _, _ ) )
     }
   }
 
@@ -104,60 +116,79 @@ trait Unification {
    * @return If a most general unifier exists, this method returns a
    *         substitution that unifies all equations of the input.
    */
-  def unify(equations: List[Equation]): Either[Error, Substitution] = equations match {
-    case Nil => Right(empty)
-    case e :: eqs => (e.leftHandSide, e.rightHandSide) match {
-      case (s, t) if s == t => unify(eqs)
+  def unify( equations: List[Equation] ): Either[Error, Substitution] = equations match {
+    case Nil => Right( empty )
+    case e :: eqs => ( e.leftHandSide, e.rightHandSide ) match {
+      case ( s, t ) if s == t => unify( eqs )
 
-      case (tv @ TypeVariable(ide), ty) => {
-        if (ty.freeVars contains tv) Left(OccursError(tv, ty))
+      case ( tv@TypeVariable( ide ), ty ) => {
+        if ( ty.freeVars contains tv ) Left( OccursError( tv, ty ) )
         else {
-          val σ: Substitution = Map(tv -> ty)
-          unify(σ(eqs)).right.map(_ <+> σ)
+          val σ: Substitution = Map( tv -> ty )
+          unify( σ( eqs ) ).right.map( _ <+> σ )
         }
       }
 
-      case (ty, tv @ TypeVariable(ide)) => e match {
-        case _: Unifiable => unify(Unifiable(tv, ty) :: eqs)
-        case _: MoreGeneralThan => Left(MoreGeneralError(ty, tv))
+      case ( ty, tv@TypeVariable( ide ) ) => e match {
+        case _: Unifiable => unify( Unifiable( tv, ty ) :: eqs )
+        case _: MoreGeneralThan => Left( MoreGeneralError( ty, tv ) )
       }
 
-      case (FunctionType(s1, s2), FunctionType(t1, t2)) => {
-        unify((s1 :==: t1) :: (s2 :==: t2) :: eqs)
+      case ( FunctionType( s1, s2 ), FunctionType( t1, t2 ) ) => {
+        unify( ( s1 :==: t1 ) :: ( s2 :==: t2 ) :: eqs )
       }
 
-      case (TypeConstructor(con1, s), TypeConstructor(con2, t)) => {
-        if (con1 != con2) Left(MisMatchError(e.leftHandSide, e.rightHandSide))
+      case ( TypeConstructor( con1, s ), TypeConstructor( con2, t ) ) => {
+        if ( con1 != con2 ) Left( MisMatchError( e.leftHandSide, e.rightHandSide ) )
         else {
-          unify((s, t).zipped.map(_ :==: _) ++ eqs)
+          unify( ( s, t ).zipped.map( _ :==: _ ) ++ eqs )
         }
       }
 
-      case (TypeScheme(_, s), TypeScheme(_, t)) => e match {
-        case _: Unifiable => unify(Unifiable(s, t) :: eqs)
-        case _: MoreGeneralThan => unify(Unifiable(s, t) :: eqs)
+      case ( TypeScheme( _, s ), TypeScheme( _, t ) ) => e match {
+        case _: Unifiable => unify( Unifiable( s, t ) :: eqs )
+        case _: MoreGeneralThan => unify( Unifiable( s, t ) :: eqs )
       }
 
-      case _ => Left(MisMatchError(e.leftHandSide, e.rightHandSide))
+      case _ => Left( MisMatchError( e.leftHandSide, e.rightHandSide ) )
     }
   }
 
   /**
    * Find the most general unifier for a single equation.
    */
-  def unify(equation: Equation): Either[Error, Substitution] = unify(List(equation))
+  def unify( equation: Equation ): Either[Error, Substitution] = unify( List( equation ) )
 
   /* Unification errors */ // TODO: Better error messages
-  case class OccursError(tvar: TypeVariable, ty: Type) extends Error {
-    override def toString = "Occurs error: " + quote(tvar.toString) + ", " + quote(ty.toString) + ".\n"
+  case class OccursError( tvar: TypeVariable, ty: Type ) extends Error {
+
+    /**
+     * undocumented
+     */
+    override def toString = "Occurs error: " + quote( tvar.toString ) + ", " + quote( ty.toString ) + ".\n"
   }
-  case class MisMatchError(t1: Type, t2: Type) extends Error {
-    override def toString = "Could not match "+quote(t1.toString)+" and "+quote(t2.toString)+".\n"
+
+  case class MisMatchError( t1: Type, t2: Type ) extends Error {
+
+    /**
+     * undocumented
+     */
+    override def toString = "Could not match " + quote( t1.toString ) + " and " + quote( t2.toString ) + ".\n"
   }
-  case class MoreGeneralError(t1: Type, t2: Type) extends Error {
-    override def toString = "More general error: " + quote(t1.toString) + " and " + quote(t2.toString) +".\n"
+
+  case class MoreGeneralError( t1: Type, t2: Type ) extends Error {
+
+    /**
+     * undocumented
+     */
+    override def toString = "More general error: " + quote( t1.toString ) + " and " + quote( t2.toString ) + ".\n"
   }
-  case class UnificationError(t1: Type, t2: Type) extends Error {
-    override def toString = "Unification error: " + quote(t1.toString) + " and " + quote(t2.toString) +".\n"
+
+  case class UnificationError( t1: Type, t2: Type ) extends Error {
+
+    /**
+     * undocumented
+     */
+    override def toString = "Unification error: " + quote( t1.toString ) + " and " + quote( t2.toString ) + ".\n"
   }
 }

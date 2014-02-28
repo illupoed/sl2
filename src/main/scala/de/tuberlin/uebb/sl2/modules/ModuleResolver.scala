@@ -8,55 +8,78 @@ import java.net.URL
  * references.
  */
 trait ModuleResolver {
-  this: Syntax
-  with AbstractFile
-  with Errors
-  with Configs =>
+  this: Syntax with AbstractFile with Errors with Configs =>
 
   sealed abstract class ResolvedImport(
-      val path:String,
-      val file:AbstractFile,
-      val ast:Import)
-  
+    val path: String,
+    val file: AbstractFile,
+    val ast: Import )
+
   sealed abstract class ResolvedModuleImport(
-      val name:String,
-      override val path:String,
-      override val file:AbstractFile,
-      val jsFile:AbstractFile,
-      val signature:Program,
-      override val ast:Import) extends ResolvedImport(path, file, ast)
-      
+    val name: String,
+    override val path: String,
+    override val file: AbstractFile,
+    val jsFile: AbstractFile,
+    val signature: Program,
+    override val ast: Import )
+      extends ResolvedImport( path, file, ast )
+
   case class ResolvedUnqualifiedImport(
-      override val path: String,
-      override val file: AbstractFile,
-      override val jsFile: AbstractFile,
-      override val signature: Program,
-      override val ast: UnqualifiedImport) extends ResolvedModuleImport(
-          "$$"+path.replace('/', '$'), path, file, jsFile, signature, ast)
-  
+    override val path: String,
+    override val file: AbstractFile,
+    override val jsFile: AbstractFile,
+    override val signature: Program,
+    override val ast: UnqualifiedImport )
+      extends ResolvedModuleImport(
+        "$$" + path.replace( '/', '$' ), path, file, jsFile, signature, ast )
+
   case class ResolvedQualifiedImport(
-      override val name: ModuleVar,
-      override val path: String,
-      override val file: AbstractFile,
-      override val jsFile: AbstractFile,
-      override val signature: Program,
-      override val ast: QualifiedImport)
-    extends ResolvedModuleImport(name, path, file, jsFile, signature, ast)
-    
+    override val name: ModuleVar,
+    override val path: String,
+    override val file: AbstractFile,
+    override val jsFile: AbstractFile,
+    override val signature: Program,
+    override val ast: QualifiedImport )
+      extends ResolvedModuleImport( name, path, file, jsFile, signature, ast )
+
   case class ResolvedExternImport(
-      override val path: String,
-      override val file: AbstractFile,
-      override val ast: ExternImport)
-    extends ResolvedImport(path, file, ast)
-    
-  def inferDependencies(program: AST, config: Config): Either[Error, List[ResolvedImport]]
-  def resolveDependencies(program: AST, config: Config): Either[Error, Set[String]]
-  
-  def checkImports(imports : List[Import]) : Either[Error, Unit]
+    override val path: String,
+    override val file: AbstractFile,
+    override val ast: ExternImport )
+      extends ResolvedImport( path, file, ast )
 
-  def findImportResource(path: String, config: Config, attr: Attribute): Either[Error, AbstractFile]
+  /**
+   * undocumented
+   */
+  def inferDependencies( program: AST, config: Config ): Either[Error, List[ResolvedImport]]
 
+  /**
+   * undocumented
+   */
+  def resolveDependencies( program: AST, config: Config ): Either[Error, Set[String]]
+
+  /**
+   * undocumented
+   */
+  def checkImports( imports: List[Import] ): Either[Error, Unit]
+
+  /**
+   * undocumented
+   */
+  def findImportResource( path: String, config: Config, attr: Attribute ): Either[Error, AbstractFile]
+
+  /**
+   * undocumented
+   */
   def standardLibName: String
+
+  /**
+   * undocumented
+   */
   def standardLibUrl: String
-  def getLibResource(path: String) = getClass().getResource(standardLibUrl + path)
+
+  /**
+   * undocumented
+   */
+  def getLibResource( path: String ) = getClass().getResource( standardLibUrl + path )
 }

@@ -31,105 +31,142 @@ package de.tuberlin.uebb.sl2.impl
 import de.tuberlin.uebb.sl2.modules._
 
 /**
-  * Port of P. Wadler, Efficient Compilation of Pattern Matching
-  */
-trait WadlerPatternMatching extends PatternMatching with Syntax with AlphaConversion {
+ * Port of P. Wadler, Efficient Compilation of Pattern Matching
+ */
+trait WadlerPatternMatching
+    extends PatternMatching
+    with Syntax
+    with AlphaConversion {
 
-  def createSimpleCaseMatch(ctxt: PatternMatchingCtxt, equations: List[Equation], variables: List[Var]) = {
-    wadlerMatch(ctxt, variables, equations, ExVar(Syntax.Var("MATCHFAIL")))
+  /**
+   * undocumented
+   */
+  def createSimpleCaseMatch( ctxt: PatternMatchingCtxt, equations: List[Equation], variables: List[Var] ) = {
+    wadlerMatch( ctxt, variables, equations, ExVar( Syntax.Var( "MATCHFAIL" ) ) )
   }
 
-  def isVar(eq: Equation) = eq.pattern match {
-    case PatternVar(_, _) :: _ => true
+  /**
+   * undocumented
+   */
+  def isVar( eq: Equation ) = eq.pattern match {
+    case PatternVar( _, _ ) :: _ => true
     case _ => false
   }
 
-  def partition[A](p: A => Boolean, l: List[A]): List[List[A]] = l match {
+  /**
+   * undocumented
+   */
+  def partition[A]( p: A => Boolean, l: List[A] ): List[List[A]] = l match {
     case Nil => Nil
-    case x :: Nil => List(List(x))
-    case x :: y :: xs if (p(x) && p(y)) => tack(x, partition(p, y :: xs))
-    case x :: y :: xs => List(x) :: partition(p, y :: xs)
+    case x :: Nil => List( List( x ) )
+    case x :: y :: xs if ( p( x ) && p( y ) ) => tack( x, partition( p, y :: xs ) )
+    case x :: y :: xs => List( x ) :: partition( p, y :: xs )
   }
 
-  def tack[A](x: A, xss: List[List[A]]): List[List[A]] = {
-    (x :: xss.head) :: xss.tail
+  /**
+   * undocumented
+   */
+  def tack[A]( x: A, xss: List[List[A]] ): List[List[A]] = {
+    ( x :: xss.head ) :: xss.tail
   }
 
-  def wadlerMatch(ctxt: PatternMatchingCtxt, variables: List[Var], equations: List[Equation], error: Expr): Expr = variables match {
+  /**
+   * undocumented
+   */
+  def wadlerMatch( ctxt: PatternMatchingCtxt, variables: List[Var], equations: List[Equation], error: Expr ): Expr = variables match {
     case Nil => equations match {
       case eq :: Nil => eq.rhs
       case eq :: rest => eq.rhs //TODO: Warn about unreachable code
       case Nil => error
     }
-    case u :: us => partition(isVar, equations).foldRight(error)(matchVarCon(ctxt, variables))
+    case u :: us => partition( isVar, equations ).foldRight( error )( matchVarCon( ctxt, variables ) )
   }
 
-  def matchVarCon(ctxt: PatternMatchingCtxt, variables: List[Var])(equations: List[Equation], error: Expr) = {
-    if (isVar(equations.head)) {
-      matchVar(ctxt, variables, equations, error)
-    } else {
-      matchCon(ctxt, variables, equations, error)
+  /**
+   * undocumented
+   */
+  def matchVarCon( ctxt: PatternMatchingCtxt, variables: List[Var] )( equations: List[Equation], error: Expr ) = {
+    if ( isVar( equations.head ) ) {
+      matchVar( ctxt, variables, equations, error )
+    }
+    else {
+      matchCon( ctxt, variables, equations, error )
     }
   }
 
-  def matchVar(ctxt: PatternMatchingCtxt, variables: List[Var], equations: List[Equation], error: Expr) = variables match {
+  /**
+   * undocumented
+   */
+  def matchVar( ctxt: PatternMatchingCtxt, variables: List[Var], equations: List[Equation], error: Expr ) = variables match {
     case u :: us => {
       object freshNames {
         var count = ctxt.k - 1
-        def fresh(u: Unit): String = {
+        def fresh( u: Unit ): String = {
           count = count + 1
           "u" + count
         }
       }
       val newEquations = equations map {
-        case Equation(PatternVar(f, _) :: patterns, expr) =>
-          Equation(patterns, substitute(freshNames.fresh, Map(f -> u.ide), expr))
+        case Equation( PatternVar( f, _ ) :: patterns, expr ) =>
+          Equation( patterns, substitute( freshNames.fresh, Map( f -> u.ide ), expr ) )
         case _ =>
-          sys.error("Pattern Matching: Empty pattern list while building matching equation.")
+          sys.error( "Pattern Matching: Empty pattern list while building matching equation." )
       }
-      wadlerMatch(ctxt, us, newEquations, error)
+      wadlerMatch( ctxt, us, newEquations, error )
     }
 
-    case Nil => sys.error("Pattern matching: Empty variable list while matching variables.")
+    case Nil => sys.error( "Pattern matching: Empty variable list while matching variables." )
   }
 
-  def choose(c: ConVar, equations: List[Equation]): List[Equation] = equations match {
+  /**
+   * undocumented
+   */
+  def choose( c: ConVar, equations: List[Equation] ): List[Equation] = equations match {
     case Nil => Nil
-    case (eq @ Equation(PatternExpr(x, _, _) :: _, _)) :: rest if (x == c) => eq :: choose(c, rest)
-    case _ :: rest => choose(c, rest)
+    case ( eq@Equation( PatternExpr( x, _, _ ) :: _, _ ) ) :: rest if ( x == c ) => eq :: choose( c, rest )
+    case _ :: rest => choose( c, rest )
   }
 
-  def getCon(eq: Equation) = eq match {
-    case Equation(PatternExpr(c, _, _) :: _, _) => c
-    case Equation(PatternVar(_, _) :: _, _) => sys.error("Pattern Matching: Cannot select constructor in pattern variable.")
-    case Equation(Nil, _) => sys.error("Pattern Matching: Cannot select constructor in empty equation.")
+  /**
+   * undocumented
+   */
+  def getCon( eq: Equation ) = eq match {
+    case Equation( PatternExpr( c, _, _ ) :: _, _ ) => c
+    case Equation( PatternVar( _, _ ) :: _, _ ) => sys.error( "Pattern Matching: Cannot select constructor in pattern variable." )
+    case Equation( Nil, _ ) => sys.error( "Pattern Matching: Cannot select constructor in empty equation." )
   }
 
-  def matchCon(ctxt: PatternMatchingCtxt, variables: List[Var], equations: List[Equation], error: Expr) = variables match {
+  /**
+   * undocumented
+   */
+  def matchCon( ctxt: PatternMatchingCtxt, variables: List[Var], equations: List[Equation], error: Expr ) = variables match {
     case u :: us => {
-      val cs = ctxt.constructors(getCon(equations.head))
-      val alternatives = cs map { c => matchClause(c, ctxt, variables, choose(c, equations), error) }
+      val cs = ctxt.constructors( getCon( equations.head ) )
+      val alternatives = cs map { c => matchClause( c, ctxt, variables, choose( c, equations ), error ) }
 
-      Case(ExVar(u), alternatives.toList)
+      Case( ExVar( u ), alternatives.toList )
     }
-    case Nil => sys.error("Pattern matching: Cannot match constructors in empty pattern list.")
+    case Nil => sys.error( "Pattern matching: Cannot match constructors in empty pattern list." )
   }
 
-  def matchClause(c: ConVar, ctxt: PatternMatchingCtxt, variables: List[Var], equations: List[Equation], error: Expr): Alternative = variables match {
+  /**
+   * undocumented
+   */
+  def matchClause( c: ConVar, ctxt: PatternMatchingCtxt, variables: List[Var], equations: List[Equation], error: Expr ): Alternative = variables match {
     case u :: us => {
-      val kn = ctxt.k + ctxt.arity(c)
-      val newVars = (ctxt.k until kn).toList.map("u" + _)
+      val kn = ctxt.k + ctxt.arity( c )
+      val newVars = ( ctxt.k until kn ).toList.map( "u" + _ )
 
-      val newEquations = for (eq <- equations) yield eq match {
-        case Equation(PatternExpr(con, exprs, _) :: pattern, rhs) => Equation(exprs ++ pattern, rhs)
-        case Equation(PatternVar(_, _) :: _, _) => sys.error("Pattern Matching: Cannot match clauses in pattern variable.")
-        case Equation(Nil, _) => sys.error("Pattern matching: Cannot match clauses in empty equation.")
+      val newEquations = for ( eq <- equations ) yield eq match {
+        case Equation( PatternExpr( con, exprs, _ ) :: pattern, rhs ) => Equation( exprs ++ pattern, rhs )
+        case Equation( PatternVar( _, _ ) :: _, _ ) => sys.error( "Pattern Matching: Cannot match clauses in pattern variable." )
+        case Equation( Nil, _ ) => sys.error( "Pattern matching: Cannot match clauses in empty equation." )
       }
 
-      Alternative(PatternExpr(c, newVars map (PatternVar(_))), wadlerMatch(ctxt.copy(k = kn),
-        newVars.map(Syntax.Var(_)) ++ us, newEquations, error))
+      Alternative( PatternExpr( c, newVars map ( PatternVar( _ ) ) ), wadlerMatch( ctxt.copy( k = kn ),
+        newVars.map( Syntax.Var( _ ) ) ++ us, newEquations, error ) )
     }
-    case Nil => sys.error("Pattern matching: Cannot match clauses in empty pattern list.")
+    case Nil => sys.error( "Pattern matching: Cannot match clauses in empty pattern list." )
   }
 
 }

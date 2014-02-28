@@ -29,9 +29,13 @@
 package de.tuberlin.uebb.sl2.modules
 
 /**
-  * The compiler driver.
-  */
+ * The compiler driver.
+ */
 trait Driver {
   self: Parser with CodeGenerator with Syntax with ProgramChecker with JsSyntax with Errors with Configs =>
-  def run(config: Config): Either[Error, String]
+
+  /**
+   * undocumented
+   */
+  def run( config: Config ): Either[Error, String]
 }

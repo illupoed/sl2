@@ -1,10 +1,19 @@
 package de.tuberlin.uebb.sl2.modules
 
+/**
+ * undocumented
+ */
 trait SignatureSerializer {
-  this : Syntax =>
+  this: Syntax =>
 
-  def serialize(in : AST) : String
-  
-  def deserialize(in : String, location : Location = NoLocation) : AST
+  /**
+   * undocumented
+   */
+  def serialize( in: AST ): String
+
+  /**
+   * undocumented
+   */
+  def deserialize( in: String, location: Location = NoLocation ): AST
 
 }

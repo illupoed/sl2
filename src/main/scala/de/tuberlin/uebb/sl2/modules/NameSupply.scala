@@ -29,29 +29,29 @@
 package de.tuberlin.uebb.sl2.modules
 
 /**
-  * A supply for fresh names.
-  */
+ * A supply for fresh names.
+ */
 trait NameSupply {
   private var index = 0
 
   /**
-    * Generate names in the following style: ''$0'', ''$1'', ...
-    */
-  def freshName(): String = freshName("$")
+   * Generate names in the following style: ''$0'', ''$1'', ...
+   */
+  def freshName(): String = freshName( "$" )
 
   /**
-    * Generate a fresh name with the given prefix.
-    */
-  def freshName(prefix: String): String = {
+   * Generate a fresh name with the given prefix.
+   */
+  def freshName( prefix: String ): String = {
     val idx = index
     index += 1
     prefix + idx
   }
 
   /**
-    * Resets the internal counter for fresh names.
-    * 
-    * Only for testing. Never use in production code.
-    */
+   * Resets the internal counter for fresh names.
+   *
+   * Only for testing. Never use in production code.
+   */
   def reset() = index = 0
 }

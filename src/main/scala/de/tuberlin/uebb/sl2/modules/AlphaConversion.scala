@@ -28,76 +28,87 @@
 
 package de.tuberlin.uebb.sl2.modules
 
-
 /**
-  * Alpha conversion for SL expressions.
-  */
+ * Alpha conversion for SL expressions.
+ */
 trait AlphaConversion {
 
   this: Syntax =>
 
   type NewName = Unit => String
 
-  def substitute(fresh : NewName, subst : Map[VarName, VarName], a : Alternative) : Alternative = {
-    val bound = vars(a.pattern)
-    val rename = bound.intersect(subst.values.toSet)
-    if (rename.isEmpty) {
-      Alternative(a.pattern, substitute(fresh, subst -- vars(a.pattern), a.expr))
-    } else {
+  /**
+   * undocumented
+   */
+  def substitute( fresh: NewName, subst: Map[VarName, VarName], a: Alternative ): Alternative = {
+    val bound = vars( a.pattern )
+    val rename = bound.intersect( subst.values.toSet )
+    if ( rename.isEmpty ) {
+      Alternative( a.pattern, substitute( fresh, subst -- vars( a.pattern ), a.expr ) )
+    }
+    else {
       /* alpha conversion */
-      val renameMap = Map() ++ (rename map (r => (r -> fresh())))
-      substitute(fresh, subst, substitute(fresh, renameMap, a))
+      val renameMap = Map() ++ ( rename map ( r => ( r -> fresh() ) ) )
+      substitute( fresh, subst, substitute( fresh, renameMap, a ) )
     }
   }
 
-  def substitute(subst : Map[VarName, VarName], pattern : Pattern) : Pattern = pattern match {
-    case PatternExpr(c, patterns, _) => PatternExpr(c, patterns map (substitute(subst, _)))
-    case PatternVar(x, _) if subst.contains(x) => PatternVar(subst(x))
+  /**
+   * undocumented
+   */
+  def substitute( subst: Map[VarName, VarName], pattern: Pattern ): Pattern = pattern match {
+    case PatternExpr( c, patterns, _ ) => PatternExpr( c, patterns map ( substitute( subst, _ ) ) )
+    case PatternVar( x, _ ) if subst.contains( x ) => PatternVar( subst( x ) )
     case p@_ => p
   }
 
-  def substitute(fresh : NewName, subst : Map[VarName, VarName], e : Expr) : Expr = e match {
+  /**
+   * undocumented
+   */
+  def substitute( fresh: NewName, subst: Map[VarName, VarName], e: Expr ): Expr = e match {
 
-    case Conditional(i, t, e, attr) => Conditional(substitute(fresh, subst, i), 
-                                                   substitute(fresh, subst, t), 
-                                                   substitute(fresh, subst, e), attr)
- 
-    case Lambda(pats, e, attr) => {
-      val bound = pats.flatMap(vars).toSet
-      val rename = bound.intersect(subst.values.toSet)
-      if (rename.isEmpty) {
-        Lambda(pats, substitute(fresh, subst -- bound, e), attr) 
-      } else {
+    case Conditional( i, t, e, attr ) => Conditional( substitute( fresh, subst, i ),
+      substitute( fresh, subst, t ),
+      substitute( fresh, subst, e ), attr )
+
+    case Lambda( pats, e, attr ) => {
+      val bound = pats.flatMap( vars ).toSet
+      val rename = bound.intersect( subst.values.toSet )
+      if ( rename.isEmpty ) {
+        Lambda( pats, substitute( fresh, subst -- bound, e ), attr )
+      }
+      else {
         /* alpha conversion */
-        val renameMap = Map() ++ (rename map (r => (r -> fresh())))
-        substitute(fresh, subst, Lambda(pats map (substitute(renameMap, _)), substitute(fresh, renameMap, e)))
+        val renameMap = Map() ++ ( rename map ( r => ( r -> fresh() ) ) )
+        substitute( fresh, subst, Lambda( pats map ( substitute( renameMap, _ ) ), substitute( fresh, renameMap, e ) ) )
       }
     }
 
-    case Case(e1, alts, attr) => {
-      Case(substitute(fresh, subst, e1), alts map {a => substitute(fresh, subst, a)}, attr)
+    case Case( e1, alts, attr ) => {
+      Case( substitute( fresh, subst, e1 ), alts map { a => substitute( fresh, subst, a ) }, attr )
     }
 
-    case Let(defs, rhs, attr) => {
-      val bound = (defs map (_.lhs)).toSet
-      val rename = bound.intersect(subst.values.toSet)
-      if (rename.isEmpty) {
-        Let(defs map {d => d.copy(rhs = substitute(fresh, subst -- bound, d.rhs))}, substitute(fresh, subst -- bound, rhs))
-      } else {
-        val renameMap = Map() ++ (rename map (r => (r -> fresh())))
-        val l2 = Let(defs map {d => d.copy(rhs = substitute(fresh, renameMap, d.rhs))}, substitute(fresh, renameMap, rhs))
-        substitute(fresh, subst, l2)
+    case Let( defs, rhs, attr ) => {
+      val bound = ( defs map ( _.lhs ) ).toSet
+      val rename = bound.intersect( subst.values.toSet )
+      if ( rename.isEmpty ) {
+        Let( defs map { d => d.copy( rhs = substitute( fresh, subst -- bound, d.rhs ) ) }, substitute( fresh, subst -- bound, rhs ) )
+      }
+      else {
+        val renameMap = Map() ++ ( rename map ( r => ( r -> fresh() ) ) )
+        val l2 = Let( defs map { d => d.copy( rhs = substitute( fresh, renameMap, d.rhs ) ) }, substitute( fresh, renameMap, rhs ) )
+        substitute( fresh, subst, l2 )
       }
     }
 
-    case App(l, r, attr) => App(substitute(fresh, subst, l), substitute(fresh, subst, r), attr)
-    case ExVar(Syntax.Var(x,Syntax.LocalMod), attr) => ExVar(Syntax.Var(subst.get(x).getOrElse(x)), attr)
-    case c@ExVar(_, _) => c
-    case c@ExCon(_, _) => c
-    case c@ConstInt(_, _) => c
-    case c@ConstReal(_, _) => c
-    case c@ConstChar(_, _) => c
-    case c@ConstString(_, _) => c
-    case c@JavaScript(_, _, _) => c
+    case App( l, r, attr ) => App( substitute( fresh, subst, l ), substitute( fresh, subst, r ), attr )
+    case ExVar( Syntax.Var( x, Syntax.LocalMod ), attr ) => ExVar( Syntax.Var( subst.get( x ).getOrElse( x ) ), attr )
+    case c@ExVar( _, _ ) => c
+    case c@ExCon( _, _ ) => c
+    case c@ConstInt( _, _ ) => c
+    case c@ConstReal( _, _ ) => c
+    case c@ConstChar( _, _ ) => c
+    case c@ConstString( _, _ ) => c
+    case c@JavaScript( _, _, _ ) => c
   }
 }

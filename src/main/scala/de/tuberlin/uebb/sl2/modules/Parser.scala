@@ -29,24 +29,26 @@
 package de.tuberlin.uebb.sl2.modules
 
 /**
-  * The Parser trait.
-  */
+ * The Parser trait.
+ */
 trait Parser {
-
-  this : Syntax with Errors => 
+  this: Syntax with Errors =>
 
   /**
    * name of the file that is being parsed at the moment.
    */
   // SL-SoSe13-Team: needs to be a "var" because of the strange design decision
   //     not to abstract the parsing process into a separate object...
-  var fileName : String
-    
-  def parseAst(in : String) : Either[Error, AST]
+  var fileName: String
 
   /**
-    * Parse an SL expression.
-    */
-  def parseExpr(in : String) : Either[Error, Expr]
-  
+   * Parse an SL module
+   */
+  def parseAst( in: String ): Either[Error, AST]
+
+  /**
+   * Parse an SL expression.
+   */
+  def parseExpr( in: String ): Either[Error, Expr]
+
 }

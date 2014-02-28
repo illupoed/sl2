@@ -12,116 +12,211 @@ trait AbstractFile {
    * and files from the file system ({@link PathedFile}).
    */
   abstract class AbstractFile {
-    def filename():String
-    def parent():File
-    def path():String
-    def canRead():Boolean
-    def lastModified():Long
-    def contents():String
+
+    /**
+     * undocumented
+     */
+    def filename(): String
+
+    /**
+     * undocumented
+     */
+    def parent(): File
+
+    /**
+     * undocumented
+     */
+    def path(): String
+
+    /**
+     * undocumented
+     */
+    def canRead(): Boolean
+
+    /**
+     * undocumented
+     */
+    def lastModified(): Long
+
+    /**
+     * undocumented
+     */
+    def contents(): String
   }
-  
-  class PathedFile(path: Path) extends AbstractFile {
+
+  class PathedFile( path: Path )
+      extends AbstractFile {
+
+    /**
+     * undocumented
+     */
     def filename() = {
       path.name
     }
-    
+
+    /**
+     * undocumented
+     */
     def parent() = {
-      if(path.parent != null)
-    	  new File(path.parent.toString)
+      if ( path.parent != null )
+        new File( path.parent.toString )
       else
-    	  new File(".")
+        new File( "." )
     }
-    
+
+    /**
+     * undocumented
+     */
     def path() = {
       path.path
     }
-    
+
+    /**
+     * undocumented
+     */
     def canRead() = {
       path.canRead
     }
-    
+
+    /**
+     * undocumented
+     */
     def lastModified() = {
       path.lastModified
     }
-    
+
+    /**
+     * undocumented
+     */
     def contents() = {
-      path.lines(includeTerminator = true).mkString("")
+      path.lines( includeTerminator = true ).mkString( "" )
     }
   }
-  
-  class ErrorFile(url: URL) extends AbstractFile {
+
+  class ErrorFile( url: URL )
+      extends AbstractFile {
+
+    /**
+     * undocumented
+     */
     def filename = { "Error" }
-    def parent = { new File(".") }
+
+    /**
+     * undocumented
+     */
+    def parent = { new File( "." ) }
+
+    /**
+     * undocumented
+     */
     def path = { throw new UnsupportedOperationException() }
+
+    /**
+     * undocumented
+     */
     def canRead() = { false }
+
+    /**
+     * undocumented
+     */
     def lastModified() = { 0 }
-    def contents() = { throw new UnsupportedOperationException() } 
+
+    /**
+     * undocumented
+     */
+    def contents() = { throw new UnsupportedOperationException() }
   }
-  
+
   /**
-   * A file inside a .jar file 
+   * A file inside a .jar file
    */
-  class BottledFile(url: URL) extends AbstractFile {
-    
+  class BottledFile( url: URL )
+      extends AbstractFile {
+
+    /**
+     * undocumented
+     */
     def filename() = {
       val f = url.getFile
-      f.substring(f.lastIndexOf("!")+1)
+      f.substring( f.lastIndexOf( "!" ) + 1 )
     }
-    
+
+    /**
+     * undocumented
+     */
     def parent() = {
-      new File(".")
+      new File( "." )
     }
-    
+
+    /**
+     * undocumented
+     */
     def path() = {
       url.toString
     }
-    
+
+    /**
+     * undocumented
+     */
     def jarFile() = {
       val f = url.getFile
-      f.substring(5, f.lastIndexOf("!"))
+      f.substring( 5, f.lastIndexOf( "!" ) )
     }
-    
+
+    /**
+     * A bottled file can always be read. Otherwise, its location wouldn't have been found.
+     */
     def canRead() = {
-      /*
-       * A bottled file can always be read. Otherwise, its location wouldn't have been found.
-       */
       true
     }
-    
+
+    /**
+     * The modification date for a bottled does not matter, because all files
+     * (source, js and signature) in a JAR file have the same date and cannot
+     * be modified.
+     */
     def lastModified() = {
-      /*
-       * The modification date for a bottled does not matter, because all files
-       * (source, js and signature) in a JAR file have the same date and cannot
-       * be modified.
-       */
       0
     }
-    
+
+    /**
+     * undocumented
+     */
     def contents() = {
-      Source.fromURL(url).getLines.mkString("\n")
+      Source.fromURL( url ).getLines.mkString( "\n" )
     }
   }
-  
-  def createFile(url: URL, path: String):AbstractFile = {
-    createFile(new URL(url, path))
+
+  /**
+   * undocumented
+   */
+  def createFile( url: URL, path: String ): AbstractFile = {
+    createFile( new URL( url, path ) )
   }
-  
-  def createFile(file: File, path: String):AbstractFile = {
-    if(file != null)
-    	createFile(new URL(file.toURI.toURL, path))
+
+  /**
+   * undocumented
+   */
+  def createFile( file: File, path: String ): AbstractFile = {
+    if ( file != null )
+      createFile( new URL( file.toURI.toURL, path ) )
     else
-        new ErrorFile(new File(path).toURI.toURL)
+      new ErrorFile( new File( path ).toURI.toURL )
   }
-  
-	def createFile(url: URL):AbstractFile = {
-	  if(url.toString.startsWith("jar:")) {
-		  new BottledFile(url)
-	  } else {
-	      val option = Path(url.toURI)
-	      if(option.isEmpty)
-	    	  new ErrorFile(url)
-	      else
-	    	  new PathedFile(option.get)
-	  }
-	}
+
+  /**
+   * undocumented
+   */
+  def createFile( url: URL ): AbstractFile = {
+    if ( url.toString.startsWith( "jar:" ) ) {
+      new BottledFile( url )
+    }
+    else {
+      val option = Path( url.toURI )
+      if ( option.isEmpty )
+        new ErrorFile( url )
+      else
+        new PathedFile( option.get )
+    }
+  }
 }

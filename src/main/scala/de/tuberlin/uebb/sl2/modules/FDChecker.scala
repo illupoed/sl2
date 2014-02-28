@@ -29,8 +29,8 @@
 package de.tuberlin.uebb.sl2.modules
 
 /**
-  * Check function definitions for well-formedness and correctness.
-  */
+ * Check function definitions for well-formedness and correctness.
+ */
 trait FDChecker {
 
   this: Syntax with Context with Type with Errors =>
@@ -39,13 +39,12 @@ trait FDChecker {
    * Use a value-class to avoid tuples
    * (back to Java-Style *yeah*)
    */
-  sealed case class FDCheckResult(sigs : Map[Var, FunctionSig], defs : 
-                                  Map[Var, List[FunctionDef]], ctxt : Context)
+  sealed case class FDCheckResult( sigs: Map[Var, FunctionSig], defs: Map[Var, List[FunctionDef]], ctxt: Context )
 
   /**
-    * Check a program's top-level function definitions.
-    *
-    * @return Signatures and definitions of all top-level functions
-    */
-  def checkFunctions(in: AST): Either[Error, FDCheckResult]
+   * Check a program's top-level function definitions.
+   *
+   * @return Signatures and definitions of all top-level functions
+   */
+  def checkFunctions( in: AST ): Either[Error, FDCheckResult]
 }

@@ -33,8 +33,8 @@ import scala.language.implicitConversions
 import scala.reflect.runtime.universe._
 
 /**
-  * Generic traversal of an abstract syntax tree.
-  */
+ * Generic traversal of an abstract syntax tree.
+ */
 trait SyntaxTraversal {
 
   this: Syntax =>
@@ -50,81 +50,95 @@ trait SyntaxTraversal {
   type Id[A] = A
 
   trait ~>[F[_], G[_]] {
-    def apply[A](a: F[A]): G[A]
-    def isDefinedAt[A: TypeTag](a: A): Boolean
+
+    /**
+     * undocumented
+     */
+    def apply[A]( a: F[A] ): G[A]
+
+    /**
+     * undocumented
+     */
+    def isDefinedAt[A: TypeTag]( a: A ): Boolean
   }
 
-
   /**
-    * Wraps a partial function, to use it as an argument for the map function.
-    * 'isDefinedAt' checks whether the function argument matches the functions parameter type.
-    */
-  implicit def particalFunctionToFunctorTrans[B: TypeTag](f: PartialFunction[B, B]) = new (Id ~> Id) {
-    def apply[A](a: A): A = f(a.asInstanceOf[B]).asInstanceOf[A]
-    def isDefinedAt[A: TypeTag](a: A): Boolean = typeTag[A].tpe <:< typeTag[B].tpe && f.isDefinedAt(a.asInstanceOf[B])
+   * Wraps a partial function, to use it as an argument for the map function.
+   * 'isDefinedAt' checks whether the function argument matches the functions parameter type.
+   */
+  implicit def particalFunctionToFunctorTrans[B: TypeTag]( f: PartialFunction[B, B] ) = new ( Id ~> Id ) {
+
+    /**
+     * undocumented
+     */
+    def apply[A]( a: A ): A = f( a.asInstanceOf[B] ).asInstanceOf[A]
+
+    /**
+     * undocumented
+     */
+    def isDefinedAt[A: TypeTag]( a: A ): Boolean = typeTag[A].tpe <:< typeTag[B].tpe && f.isDefinedAt( a.asInstanceOf[B] )
   }
 
-
   /**
-    * Generic map function for SL definitions and expressions.
-    */
-  def map[A: TypeTag](f: Id ~> Id, x: A): A = {
+   * Generic map function for SL definitions and expressions.
+   */
+  def map[A: TypeTag]( f: Id ~> Id, x: A ): A = {
     val y = x match {
-      case Program(imports, signatures, functionDefs, functionDefsExtern, dataDefs, a) => {
-        val sigs: Map[VarName, FunctionSig] = signatures.map { case (a, b) => map(f, (map(f, a), map(f, b))) }
-        val fund: Map[VarName, List[FunctionDef]] = functionDefs.map { case (a, b) => map(f, (map(f, a), map(f, b.map(map(f, _))))) }
-        Program(map(f, imports), map(f, sigs), map(f, fund), map(f, functionDefsExtern), map(f, dataDefs.map(map(f, _))), map(f, a))
+      case Program( imports, signatures, functionDefs, functionDefsExtern, dataDefs, a ) => {
+        val sigs: Map[VarName, FunctionSig] = signatures.map { case ( a, b ) => map( f, ( map( f, a ), map( f, b ) ) ) }
+        val fund: Map[VarName, List[FunctionDef]] = functionDefs.map { case ( a, b ) => map( f, ( map( f, a ), map( f, b.map( map( f, _ ) ) ) ) ) }
+        Program( map( f, imports ), map( f, sigs ), map( f, fund ), map( f, functionDefsExtern ), map( f, dataDefs.map( map( f, _ ) ) ), map( f, a ) )
       }
 
-      case FunctionSig(typ, modi, a) => FunctionSig(map(f, typ), map(f, modi), map(f, a))
+      case FunctionSig( typ, modi, a ) => FunctionSig( map( f, typ ), map( f, modi ), map( f, a ) )
 
-      case FunctionDef(patterns, expr, a) => FunctionDef(map(f, patterns.map(map(f, _))), map(f, expr), map(f, a))
+      case FunctionDef( patterns, expr, a ) => FunctionDef( map( f, patterns.map( map( f, _ ) ) ), map( f, expr ), map( f, a ) )
 
-      case PatternVar(ide, a) => PatternVar(map(f, ide), map(f, a))
+      case PatternVar( ide, a ) => PatternVar( map( f, ide ), map( f, a ) )
 
-      case PatternExpr(con, patExprs, a) => PatternExpr(map(f, con), map(f, patExprs.map(map(f, _))), map(f, a))
+      case PatternExpr( con, patExprs, a ) => PatternExpr( map( f, con ), map( f, patExprs.map( map( f, _ ) ) ), map( f, a ) )
 
-      case DataDef(ide, tvars, constructors, modi, a) => DataDef(map(f, ide), map(f, tvars.map(map(f, _))), map(f, constructors.map(map(f, _))), map(f, modi), map(f, a))
+      case DataDef( ide, tvars, constructors, modi, a ) => DataDef( map( f, ide ), map( f, tvars.map( map( f, _ ) ) ), map( f, constructors.map( map( f, _ ) ) ), map( f, modi ), map( f, a ) )
 
-      case ConstructorDef(constructor, types, a) => ConstructorDef(map(f, constructor), map(f, types.map(map(f, _))), map(f, a))
+      case ConstructorDef( constructor, types, a ) => ConstructorDef( map( f, constructor ), map( f, types.map( map( f, _ ) ) ), map( f, a ) )
 
-      case TyVar(ide, a) => TyVar(map(f, ide), map(f, a))
+      case TyVar( ide, a ) => TyVar( map( f, ide ), map( f, a ) )
 
-      case FunTy(types, a) => FunTy(map(f, types.map(map(f, _))), map(f, a))
+      case FunTy( types, a ) => FunTy( map( f, types.map( map( f, _ ) ) ), map( f, a ) )
 
-      case TyExpr(conType, typeParams, a) => TyExpr(map(f, conType), map(f, typeParams.map(map(f, _))), map(f, a))
+      case TyExpr( conType, typeParams, a ) => TyExpr( map( f, conType ), map( f, typeParams.map( map( f, _ ) ) ), map( f, a ) )
 
-      case Conditional(c, t, e, a) => Conditional(map(f, c), map(f, t), map(f, e), map(f, a))
+      case Conditional( c, t, e, a ) => Conditional( map( f, c ), map( f, t ), map( f, e ), map( f, a ) )
 
-      case Lambda(ps, e, a) => Lambda(map(f, ps.map(map(f, _))), map(f, e), map(f, a))
+      case Lambda( ps, e, a ) => Lambda( map( f, ps.map( map( f, _ ) ) ), map( f, e ), map( f, a ) )
 
-      case Case(e, as, a) => Case(map(f, e), map(f, as.map(map(f, _))), map(f, a))
+      case Case( e, as, a ) => Case( map( f, e ), map( f, as.map( map( f, _ ) ) ), map( f, a ) )
 
-      case Let(ds, e, a) => Let(map(f, ds.map(map(f, _))), map(f, e), map(f, a))
+      case Let( ds, e, a ) => Let( map( f, ds.map( map( f, _ ) ) ), map( f, e ), map( f, a ) )
 
-      case App(g, e, a) => App(map(f, g), map(f, e), map(f, a))
+      case App( g, e, a ) => App( map( f, g ), map( f, e ), map( f, a ) )
 
-      case ExVar(i, a) => ExVar(map(f, i), map(f, a))
+      case ExVar( i, a ) => ExVar( map( f, i ), map( f, a ) )
 
-      case ExCon(c, a) => ExCon(map(f, c), map(f, a))
+      case ExCon( c, a ) => ExCon( map( f, c ), map( f, a ) )
 
-      case ConstInt(v, a) => ConstInt(map(f, v), map(f, a))
+      case ConstInt( v, a ) => ConstInt( map( f, v ), map( f, a ) )
 
-      case ConstChar(c, a) => ConstChar(map(f, c), map(f, a))
+      case ConstChar( c, a ) => ConstChar( map( f, c ), map( f, a ) )
 
-      case ConstString(s, a) => ConstString(map(f, s), map(f, a))
+      case ConstString( s, a ) => ConstString( map( f, s ), map( f, a ) )
 
-      case JavaScript(j, s, a) => JavaScript(map(f, j), map(f, s), map(f, a))
+      case JavaScript( j, s, a ) => JavaScript( map( f, j ), map( f, s ), map( f, a ) )
 
-      case Alternative(pattern, expr, a) => Alternative(map(f, pattern), map(f, expr), map(f, a))
+      case Alternative( pattern, expr, a ) => Alternative( map( f, pattern ), map( f, expr ), map( f, a ) )
 
-      case LetDef(lhs, rhs, a) => LetDef(map(f, lhs), map(f, rhs), map(f, a))
+      case LetDef( lhs, rhs, a ) => LetDef( map( f, lhs ), map( f, rhs ), map( f, a ) )
 
       case a => a
     }
 
-    if (f.isDefinedAt(x))
-      f(y).asInstanceOf[A]
+    if ( f.isDefinedAt( x ) )
+      f( y ).asInstanceOf[A]
     else
       y.asInstanceOf[A]
   }
