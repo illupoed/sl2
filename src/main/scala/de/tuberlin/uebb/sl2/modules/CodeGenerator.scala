@@ -282,7 +282,6 @@ trait CodeGenerator {
     case ConstReal( value, _ ) => JsDef( v, JsNum( value ) )
     case ConstChar( value, _ ) => JsDef( v, JsStr( value.toString ) )
     case ConstString( value, _ ) => JsDef( v, JsStr( value ) )
-    //TODO add sanity checks
     case JavaScript( jsCode, type_def, _ ) =>
       {
 
