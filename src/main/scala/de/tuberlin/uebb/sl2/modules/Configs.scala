@@ -2,9 +2,8 @@ package de.tuberlin.uebb.sl2.modules
 
 import java.io.File
 
-trait Configs
-{
-	case class Config(
+trait Configs {
+  case class Config(
     /**
      * where to look for source files
      */
@@ -35,6 +34,5 @@ trait Configs
     /**
      * compiling for the play framework
      */
-    val play: Boolean = false
-					)
+    val play: Boolean = false )
 }
