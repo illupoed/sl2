@@ -113,13 +113,13 @@ trait ContextAnalysisSpec extends FunSpec with ShouldMatchers {
     }
     it("Should fail on a program with data type definitions where the type name clashes with prelude type") {
       checking(prg15) should fail(
-        ErrorList(List(DuplicateError("type definition", "Bool", List(EmptyAttribute, AttributeImpl(FileLocation("prelude.sl.signature", null, null)))))))
+        ErrorList(List(DuplicateError("type definition", "Bool", List(EmptyAttribute, LocationAttribute(FileLocation("prelude.sl.signature", null, null)))))))
     }
     it("Should fail on a program with data type definitions where a type constructor clashes with prelude constructor") {
       checking(prg16) should fail(
         ErrorList(List(
-          DuplicateError("definitions of constructor", "True", List(EmptyAttribute, AttributeImpl(FileLocation("prelude.sl.signature", null, null)))),
-          DuplicateError("definitions of constructor", "False", List(EmptyAttribute, AttributeImpl(FileLocation("prelude.sl.signature", null, null))))
+          DuplicateError("definitions of constructor", "True", List(EmptyAttribute, LocationAttribute(FileLocation("prelude.sl.signature", null, null)))),
+          DuplicateError("definitions of constructor", "False", List(EmptyAttribute, LocationAttribute(FileLocation("prelude.sl.signature", null, null))))
         ))
       )
     }
