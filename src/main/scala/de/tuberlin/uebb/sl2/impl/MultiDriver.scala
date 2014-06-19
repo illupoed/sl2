@@ -41,13 +41,10 @@ import java.io.PrintWriter
 import java.io.StringWriter
 import java.net.URI
 import java.net.URL
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 import scala.io.Source
 import scalax.io.JavaConverters._
 import scalax.io._
+import java.io.FileInputStream
 
 /**
  * A driver that is able to compile more than one source file
@@ -247,9 +244,8 @@ trait MultiDriver extends Driver {
     {
       // load input file
       val name = module.name
-      println( inputConfig.sources + ", " + name )
       //TODO: move main marking to Module?
-      val isMain = !inputConfig.play && inputConfig.sources.contains( name + ".sl" )
+      val isMain = inputConfig.sources.contains( name + ".sl" )
       val destination = inputConfig.destination
       val config = inputConfig.copy( mainName = module.source.filename, mainParent = module.source.parent, destination = destination )
       val code = module.source.contents
@@ -286,7 +282,7 @@ trait MultiDriver extends Driver {
         // type check the program
         _ <- checkProgram( mo, normalizeModules( imports ) ).right
       ) yield imports
-      
+
       for (
         mo <- ast.right;
         // check and load dependencies
@@ -333,13 +329,17 @@ trait MultiDriver extends Driver {
   def generateMainJsFile( name: String, config: Config ): Either[Error, String] =
     {
       val mainJs = new File( config.destination, "main.js" )
-      val libURL = getLibURL( config )
+      val libURL = getLibURL( config ) // coping of libs files (like predef.sl) is done here 
 
       if ( libURL.isLeft )
         return Left( libURL.left.get )
 
+      if ( !config.generate_index_html ) {
+        return Right( "main generation disabled" ) // but we still want to copy the libraries
+      }
+
       val stdURL = JsObject( List( ( JsName( "std" ), JsStr( libURL.right.get.toString ) ) ) )
-      val stdPath = JsObject( List( ( JsName( "std" ), JsStr( Paths.get( libURL.right.get.toURI ).toString.replace( "\\", "/" ) ) ) ) )
+      val stdPath = JsObject( List( ( JsName( "std" ), JsStr( libURL.right.get.toURI.getPath.replaceAll( "/$", "" ) ) ) ) )
       val mainWriter = new PrintWriter( mainJs )
 
       mainWriter.println( "/***********************************/" )
@@ -459,7 +459,17 @@ trait MultiDriver extends Driver {
           Right( new File( config.destination, "/lib/" ).toURI.toURL )
         }
         else {
-          Right( new File( libFile.path ).toURI.toURL )
+          val lib_path = new java.io.File( libFile.path )
+          val entries = lib_path.listFiles()
+
+          for ( entry <- entries if ( entry.getName.matches( "^.*\\.(signature|js)$" ) ) ) {
+            copyResource( new FileInputStream( entry.getPath() ),
+              entry.getName,
+              new URI( config.destination.toURI.toString + "lib/" + entry.getName )
+            )
+          }
+
+          Right( new File( config.destination, "/lib/" ).toURI.toURL )
         }
       }
     }

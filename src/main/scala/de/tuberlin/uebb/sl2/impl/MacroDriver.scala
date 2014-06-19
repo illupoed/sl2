@@ -28,20 +28,28 @@
 
 package de.tuberlin.uebb.sl2.impl
 
-import scala.collection.mutable.ListBuffer
 import de.tuberlin.uebb.sl2.modules._
 import de.tuberlin.uebb.sl2.modules.Syntax.{ VarFirstClass }
-import language.experimental.macros
-import reflect.macros.{ Context => MacroCtxt }
+import de.tuberlin.uebb.sl2.slmacro.variabletranslation.AbstractTranslator
+import de.tuberlin.uebb.sl2.slmacro.variabletranslation.AbstractModulTranslator
+import de.tuberlin.uebb.sl2.slmacro.MacroConfig
+import de.tuberlin.uebb.sl2.slmacro.sl_function.{ isAllowedFunctionName, isAllowedClassPath }
 import scala.io.Source
+import scala.collection.mutable.ListBuffer
+import scala.language.experimental.macros
+import scala.annotation.tailrec
+import scala.reflect.macros.Universe
+import scala.reflect.macros.{ Context => MacroCtxt }
 import java.io.File
 import java.security.MessageDigest
 import scalax.io._
-import scala.annotation.tailrec
 import java.util.regex.Pattern
-import scala.reflect.macros.Universe
-import de.tuberlin.uebb.sl2.slmacro.variabletranslation.AbstractModulTranslator
-import de.tuberlin.uebb.sl2.slmacro.variabletranslation.AbstractTranslator
+import org.json4s._
+import org.json4s.native.JsonMethods._
+import scala.util.Random
+import java.io.FileInputStream
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 /**
  * Driver for the `slc' macro.
@@ -70,6 +78,7 @@ object MacroDriver
     with EnrichedLambdaCalculus
     with Substitution
     with Unification
+    with MacroConfig
 
     // Implementations 
     with GraphImpl[VarFirstClass]
@@ -89,26 +98,7 @@ object MacroDriver
    */
   def main( input: Array[String] ): Unit =
     {
-      import scala.reflect.runtime.universe._
-      println( showRaw( reify( "foo" ) ) )
 
-    }
-
-  def test_macro( vals: Boolean* ): String = macro testMacro
-  
-  /**
-   * macro to test stuff
-   */
-  def testMacro( c: MacroCtxt )( vals: c.Expr[Boolean]* ): c.Expr[String] =
-    {
-      import c.universe._
-
-        def getExpressionFromConstantString2( input: String ): c.Expr[String] =
-          {
-            c.Expr[String]( Literal( Constant( input ) ) )
-          }
-
-      getExpressionFromConstantString2( "" )
     }
 
   /**
@@ -121,13 +111,72 @@ object MacroDriver
 
         // ----------------------------------------------------------------------
         // ----- Helper functions -----------------------------------------------
-        // there defined here to use the macro context
+        // the're defined here to use the macro context
 
         /**
-         * just a helper to test a variable (macro parameter) against a list of translators
+         * a helper to test a variable (macro parameter) against a list of translators
          * the function returns the first 'match' in the list
          */
-        def useTranslators( input: c.universe.Type, translators: Seq[AbstractTranslator] ): Option[( String, c.Expr[Any => String] )] = AbstractTranslator.useTranslators( c )( input, translators )
+        def useTranslators( input: c.universe.Type, translators: Seq[AbstractTranslator] ): Option[( String, c.Expr[Any => JValue] )] =
+          {
+            AbstractTranslator.useTranslators( c )( input, translators ) match {
+              case Some( ( sl_type, _, translation_fun_scala_to_sl, _ ) ) => Some( ( sl_type, translation_fun_scala_to_sl ) )
+              case None => None
+            }
+          }
+
+        /**
+         * TODO add comments
+         */
+        def renderFunctionImports( sl_imports: Seq[QualifiedImport] ): List[c.Tree] = {
+          val imports = for ( sl_import <- sl_imports if ( sl_import.path.matches( "^" + annotation_sl_macro_folder + ".*" ) ) ) yield {
+            getClassAndFunctionFromGeneratedSLFile( sl_import.path ) match {
+              case Left( err_msg ) => c.abort( c.enclosingPosition, err_msg )
+              case Right( ( class_path, function_name ) ) => {
+                println( class_path )
+                renderFunctionImport( class_path, function_name )
+              }
+            }
+          }
+
+          imports.toList
+        }
+
+        /**
+         * creates AST to import a function under a pseudo random alias
+         */
+        def renderFunctionImport( class_path: String, function_name: String ): c.Tree =
+          {
+              def helper( class_path: Seq[String] ): c.Tree =
+                {
+                  println( class_path )
+
+                  if ( class_path.length == 1 )
+                    Ident( newTermName( class_path.head ) )
+                  else
+                    Select(
+                      helper( class_path.tail ),
+                      newTermName( class_path.head )
+                    )
+                }
+              val rand = new Random()
+            val function_alias: String = "fun" + rand.nextInt(9) + rand.nextInt(9) + rand.nextInt(9) + rand.nextInt(9) + rand.nextInt(9) + rand.nextInt(9) + rand.nextInt(9) + rand.nextInt(9) + rand.nextInt(9) + rand.nextInt(9) + rand.nextInt(9) 
+            val class_path_splitted = class_path.split( "\\." ).reverse.toSeq
+            for ( i <- class_path_splitted )
+              println( i )
+
+            c.universe.Import(
+              helper( class_path_splitted ),
+              List(
+                ImportSelector(
+                  newTermName( function_name ),
+                  -1,
+                  newTermName( function_alias ),
+                  -1
+                )
+              )
+            )
+          }
 
         /**
          * creates a valid ast for a String
@@ -140,9 +189,26 @@ object MacroDriver
         /**
          * creates a valid ast for applying an anonymous function : Any => String to an arg : Any
          */
-        def getExpressionApply( f: c.Expr[Any => String], arg: c.Expr[Any] ): c.Expr[String] =
+        def getExpressionApply( f: c.Expr[Any => JValue], arg: c.Expr[Any] ): c.Expr[String] =
           {
-            c.Expr[String]( q"$f($arg)" )
+            c.Expr[String]( q"org.json4s.native.JsonMethods.compact(org.json4s.native.JsonMethods.render($f($arg)))" )
+          }
+
+        /**
+         * Returns all QualifiedImports of a given code snippet
+         */
+        def getQualifiedImports( source_code: String ): Seq[QualifiedImport] =
+          {
+            val ast = parseAst( source_code )
+
+            ast match {
+              case Right( Program( imports, _, _, _, _, _ ) ) =>
+                for ( imp <- imports if ( imp.isInstanceOf[QualifiedImport] ) )
+                  yield imp.asInstanceOf[QualifiedImport]
+              case Left( err ) => c.abort( c.enclosingPosition, errorMessage( err ) )
+              case _ => c.abort( c.enclosingPosition, "Unknown error while compiling simple language source code." ) // this case should never happen 
+
+            }
           }
 
         /**
@@ -190,44 +256,33 @@ object MacroDriver
                         // everything is fine
                         val sl_val_name = "scalaParam" + parameter_number
                         val js_val_name = md5( c.enclosingPosition.source.toString() + c.enclosingPosition.line.toString() ) + sl_val_name
-                        Right( Tuple4( sl_val_name,
-                          sl_val_type,
-                          js_val_name,
-                          getExpressionApply( translation_expression, vals.head ) ) +: list )
+                        Right(
+                          Tuple4(
+                            sl_val_name,
+                            sl_val_type,
+                            js_val_name,
+                            getExpressionApply( translation_expression, vals.head )
+                          ) +: list
+                        )
                       }
                   }
                 }
             }
           }
 
-      // the order of the checks is importent
-      //TODO fix that later
-      val preludeTranslators: Seq[AbstractTranslator] = Seq(
-        new RealTranslator,
-        new IntTranslator,
-        new CharTranslator,
-        new BoolTranslator,
-        new StringTranslator
-      )
-
-      //      println( "----START----------------------------------------------------------" )
+      val preludeTranslators: Seq[AbstractTranslator] = AbstractTranslator.preludeTranslators
 
       sl_code match {
         case Expr( Literal( Constant( sl ) ) ) =>
           {
-            val assets_dir = "/home/norcain/workspace/sl2-demo/public/sl/"
-            val generator_dir = "generated/"
-            val module_name = "test"
-            //val module_name = source_file + "." + source_line
-            val filename = generator_dir + module_name + ".sl"
-            val placeholder = "$s"
-            //val context = md5( source_file + source_line )
+            val module_name = c.enclosingPosition.source.file.name + "." + c.enclosingPosition.line
+            val filename = inline_sl_macro_folder + module_name + ".sl"
 
             // hack to remove all placeholders in comments
             var sl_code = sl.toString().replaceAll( "(?m)^--.*$", "--" );
 
             // check number of placeholders and given parameters
-            val number_of_placeholders = countSubstring( sl_code, placeholder )
+            val number_of_placeholders = countSubstring( sl_code, scala_var_placeholder )
             val test = number_of_placeholders - vals.length
 
             if ( test > 0 )
@@ -237,11 +292,14 @@ object MacroDriver
                 c.warning( c.enclosingPosition, "There are more paremter given then placeholders in the sl code!" );
             }
 
-            // trying to transform the macro parameter to sl
-            val handleResult = handleScalaValues( 0,
+            val sl_imports = getQualifiedImports( sl_code.replaceAll( Pattern.quote( scala_var_placeholder ), "{| |}" ) )
+
+            // trying to transform all macro parameters to sl
+            val handleResult = handleScalaValues(
+              0,
               number_of_placeholders,
               vals,
-              preludeTranslators ++ loadTranslatorsFromDependencies( sl_code.replaceAll( Pattern.quote( placeholder ), "{| |}" ) )
+              preludeTranslators ++ loadTranslatorsFromDependencies( sl_imports )
             )
 
             if ( handleResult.isLeft ) {
@@ -250,18 +308,16 @@ object MacroDriver
             }
             else {
 
-              // adding sl value definitions for the macro parameter
+              // adding sl value definitions for the macro parameters
               sl_code = sl_code + "\n\n-- Generated Methods for scala values --\n"
               val paramList = handleResult.right.get
 
               for ( param <- paramList ) {
-                sl_code = ( sl_code.replaceFirst( Pattern.quote( placeholder ), param._1 ) ) + renderSLDef( param._1, param._2, param._3 )
+                sl_code = ( sl_code.replaceFirst( Pattern.quote( scala_var_placeholder ), param._1 ) ) + renderSLDef( param._1, param._2, param._3 )
               }
 
               // write sl to tmp file
               writeSlToFile( assets_dir + filename, sl_code )
-
-              //              println( "----END------------------------------------------------------------" )
 
               //build config
               val config: Config = Config( new File( assets_dir ) // source path
@@ -270,7 +326,7 @@ object MacroDriver
               , "" // mainName
               , new File( "" ) // mainParent
               , new File( assets_dir ) // destination
-              , true // compile for play framework
+              , false // generate a html file?
               )
 
               // compile sl code
@@ -281,11 +337,19 @@ object MacroDriver
                 c.abort( c.enclosingPosition, errorMessage( res.left.get ) )
               }
               else {
+                // the compiled sl code with replaced place holders
                 val require = getExpressionFromConstantString( renderRequire( module_name ) + paramList.foldLeft( "\n// transformed scala variables \n" )( ( str, param_info ) => str + renderJSDef( param_info._3 ) ) )
 
+                // translation functions ( as ast ) to translate a scala values to their appropriate sl-value (in js form)
                 val expr_list = paramList.map( ( x ) => x._4.tree ).toList
 
-                c.Expr[String]( q"{import de.tuberlin.uebb.sl2.impl._; $require.format (..$expr_list) }" )
+                // we import the used scala functions (via sl annotation macro) into the block (to make sure that if the signature of that function changes we recompile this block/file)
+                val imports = renderFunctionImports( sl_imports )
+
+                println( imports )
+
+                println( "----- Compiled " + module_name + " -----------------" )
+                c.Expr[String]( q"{import de.tuberlin.uebb.sl2.impl._; ..$imports ; $require.format (..$expr_list) }" )
               }
             }
           }
@@ -293,27 +357,6 @@ object MacroDriver
           {
             c.abort( c.enclosingPosition, "Expected a string literal, got: " + showRaw( sl_code ) )
           }
-      }
-    }
-
-  /**
-   * Analysis the sl code for Import statements and loads the appropriate Translator classes
-   *
-   * @param source_code sl code
-   */
-  def loadTranslatorsFromDependencies( source_code: String ): Seq[AbstractTranslator] =
-    {
-      import de.tuberlin.uebb.sl2.slmacro.variabletranslation
-
-      val ast = parseAst( source_code )
-
-      ast match {
-        case Right( Program( imports, _, _, _, _, _ ) ) =>
-          for (
-            imp <- imports if ( imp.isInstanceOf[QualifiedImport] );
-            trans <- AbstractModulTranslator.resolveImport( imp.path, imp.asInstanceOf[QualifiedImport].name )
-          ) yield trans
-        case _ => Seq()
       }
     }
 
@@ -332,32 +375,27 @@ object MacroDriver
   /**
    * calculates the md5 hash of a string
    */
-  def md5( input: String ): String =
-    {
-      val ar = MessageDigest.getInstance( "MD5" ).digest( input.getBytes() )
+  def md5( input: String ): String = {
+    val ar = MessageDigest.getInstance( "MD5" ).digest( input.getBytes() )
 
-      ar.foldLeft( "" )( ( x, y ) => x + String.format( "%x", new Integer( y & 0xff ) ) )
-    }
+    ar.foldLeft( "" )( ( x, y ) => x + String.format( "%x", new Integer( y & 0xff ) ) )
+  }
 
   /**
    * writes a String to a certain file. Deletes the file if it already exists.
    *
-   * TODO: check if we can write the file first
-   *
    * @param filepath eg. /tmp/foo.sl
    * @param content the content of the file
    */
-  def writeSlToFile( filepath: String, content: String ): Unit =
-    {
-      val target_file = new File( filepath );
+  def writeSlToFile( filepath: String, content: String ): Unit = {
+    import scalax.file.Path
 
-      if ( target_file.exists() )
-        target_file.delete()
+    val file = Path.fromString( filepath )
 
-      val tmp_file: Output = Resource.fromFile( filepath )
+    file.createFile( createParents = true, failIfExists = false )
 
-      tmp_file.write( content )( Codec.UTF8 )
-    }
+    file.write( content )
+  }
 
   /**
    * with this macro you can integrate sl_code in a html document. It will generate a
@@ -374,18 +412,16 @@ object MacroDriver
    */
   def renderRequire( module_name: String ): String =
     {
-      String.format(
-        """
+
+      f"""
 require
-	( [ "generated/%s.sl" ]
+	( [ "$inline_sl_macro_folder%s/$module_name%s.sl" ]
 	, function (foo)
 		{
-			foo.$main()
+			foo.$$main()
 		}
 	);
-
-""", module_name
-      )
+"""
     }
 
   /**
@@ -403,5 +439,64 @@ require
       }
     count( 0, 0 )
   }
+
+  /**
+   * Analysis the sl code for import statements and loads the appropriate translator classes
+   *
+   * @param source_code sl code
+   */
+  def loadTranslatorsFromDependencies( sl_imports: Seq[QualifiedImport] ): Seq[AbstractTranslator] =
+    {
+      import de.tuberlin.uebb.sl2.slmacro.variabletranslation
+
+      for (
+        imp <- sl_imports;
+        trans <- AbstractModulTranslator.resolveImport( imp.path, imp.name )
+      ) yield trans
+    }
+
+  /**
+   * In every sl file generated by the sl annotation macro is defined for which object (package_path.class_path) and function_name it was generated.
+   * This function returns these values
+   * counterpart of this function is sl_function.defineSlFile()
+   */
+  def getClassAndFunctionFromGeneratedSLFile( import_path: String ): Either[String, Pair[String, String]] =
+    {
+      val absolut_path = assets_dir + import_path + ".sl"
+      try {
+        val in = new FileInputStream( absolut_path );
+        val br = new BufferedReader( new InputStreamReader( in ) );
+
+        var class_path = ""
+        var function_name = ""
+        var i = 0;
+
+        do {
+          i = i + 1;
+          val line = br.readLine();
+
+          if ( line == null )
+            return Left( f"Could not read file ($absolut_path%s) generated by the sl annotation macro" )
+
+          i match {
+            case 2 => class_path = line.substring( 7 ).trim
+            case 3 => function_name = line.substring( 7 ).trim
+            case _ =>
+          }
+        } while ( i < 3 )
+
+        if ( !isAllowedFunctionName( function_name ) || !isAllowedClassPath( class_path ) )
+          return Left( f"Could not find class_path and function_name in file ($absolut_path%s) generated by the annotation macro. Did you changed the contents of the file?" )
+        else
+          return Right( class_path, function_name )
+
+      }
+      catch {
+        case e: Throwable =>
+          {
+            return Left( f"Could not read file ($absolut_path%s) generated by the sl annotation macro" )
+          }
+      }
+    }
 
 }

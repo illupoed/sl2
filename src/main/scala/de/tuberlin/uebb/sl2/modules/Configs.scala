@@ -32,7 +32,8 @@ trait Configs {
      */
     val destination: File,
     /**
-     * compiling for the play framework
+     * should the multidriver create an html file to execute the sl code in a browser
+     * the multidriver should still copy library files to the classpath folder
      */
-    val play: Boolean = false )
+    val generate_index_html: Boolean = true )
 }

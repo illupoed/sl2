@@ -17,7 +17,8 @@ object MyBuild extends Build {
       libraryDependencies ++= (
         if (scalaVersion.value.startsWith("2.10")) List("org.scalamacros" % "quasiquotes" % paradiseVersion cross CrossVersion.full)
         else Nil
-      )
+      ),
+      libraryDependencies += "org.json4s" %% "json4s-native" % "3.2.8"
     )
   )
 }

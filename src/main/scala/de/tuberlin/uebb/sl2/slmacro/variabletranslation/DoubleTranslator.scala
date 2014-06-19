@@ -3,15 +3,16 @@ package de.tuberlin.uebb.sl2.slmacro.variabletranslation
 import reflect.macros.{ Context => MacroCtxt }
 import org.json4s._
 
-object CharTranslator {
-  def scalaToJsChar( input: Any ): JValue = JString( input.asInstanceOf[Char].toString )
+object DoubleTranslator {
+  def scalaToJsReal( i: Any ): JValue = JDouble( i.asInstanceOf[Double] )
 
-  def jsToScalaChar( input: JValue ): Char =
+  def jsToScalaReal( input: JValue ): Double =
     {
       input match {
-        case JString( x ) => {
-          if ( x.length() != 0 )
-            x.charAt( 0 )
+        case JDouble( x ) => x
+        case JInt( x ) => {
+          if ( x.isValidDouble )
+            x.toDouble
           else
             throw new IllegalArgumentException
         }
@@ -20,18 +21,18 @@ object CharTranslator {
     }
 }
 
-class CharTranslator extends AbstractTranslator {
+class DoubleTranslator extends AbstractTranslator {
 
   override def translate( context: MacroCtxt )( input: context.universe.Type, translators: Seq[AbstractTranslator] ): Option[( String, Set[String], context.Expr[Any => JValue], context.Expr[JValue => Any] )] =
     {
       import context.universe._
 
-      if ( typeOf[Char].=:=( input ) ) {
+      if ( typeOf[Double].=:=( input ) ) {
         Some( (
-          "Char",
+          "Real",
           Set( module_import() ),
-          reify( { de.tuberlin.uebb.sl2.slmacro.variabletranslation.CharTranslator.scalaToJsChar } ),
-          reify( { de.tuberlin.uebb.sl2.slmacro.variabletranslation.CharTranslator.jsToScalaChar } )
+          reify( { de.tuberlin.uebb.sl2.slmacro.variabletranslation.DoubleTranslator.scalaToJsReal } ),
+          reify( { de.tuberlin.uebb.sl2.slmacro.variabletranslation.DoubleTranslator.jsToScalaReal } )
         ) )
       }
       else

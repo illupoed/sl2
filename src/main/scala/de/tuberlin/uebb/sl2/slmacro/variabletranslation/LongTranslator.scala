@@ -2,16 +2,20 @@ package de.tuberlin.uebb.sl2.slmacro.variabletranslation
 
 import reflect.macros.{ Context => MacroCtxt }
 import org.json4s._
+import scala.math.BigInt
 
-object CharTranslator {
-  def scalaToJsChar( input: Any ): JValue = JString( input.asInstanceOf[Char].toString )
+object LongTranslator {
+  def scalaToJsInt( i: Any ): JValue =
+    {
+      JInt( BigInt( i.asInstanceOf[Long] ) )
+    }
 
-  def jsToScalaChar( input: JValue ): Char =
+  def jsToScalaInt( input: JValue ): Long =
     {
       input match {
-        case JString( x ) => {
-          if ( x.length() != 0 )
-            x.charAt( 0 )
+        case JInt( x ) => {
+          if ( x.isValidLong ) // check if the input is in long range
+            x.longValue()
           else
             throw new IllegalArgumentException
         }
@@ -20,18 +24,18 @@ object CharTranslator {
     }
 }
 
-class CharTranslator extends AbstractTranslator {
+class LongTranslator extends AbstractTranslator {
 
   override def translate( context: MacroCtxt )( input: context.universe.Type, translators: Seq[AbstractTranslator] ): Option[( String, Set[String], context.Expr[Any => JValue], context.Expr[JValue => Any] )] =
     {
       import context.universe._
 
-      if ( typeOf[Char].=:=( input ) ) {
+      if ( typeOf[Long].=:=( input ) ) {
         Some( (
-          "Char",
+          "Int",
           Set( module_import() ),
-          reify( { de.tuberlin.uebb.sl2.slmacro.variabletranslation.CharTranslator.scalaToJsChar } ),
-          reify( { de.tuberlin.uebb.sl2.slmacro.variabletranslation.CharTranslator.jsToScalaChar } )
+          reify( { de.tuberlin.uebb.sl2.slmacro.variabletranslation.LongTranslator.scalaToJsInt } ),
+          reify( { de.tuberlin.uebb.sl2.slmacro.variabletranslation.LongTranslator.jsToScalaInt } )
         ) )
       }
       else
