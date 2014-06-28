@@ -51,12 +51,8 @@ case class SeqTranslator( override val module_alias: String = "SeqList" ) extend
       val first_type_parameter: Type = seq_class_symbol.typeParams( 0 ).asType.toType
       val seq_any_type: Type = typeOf[Seq[Any]]
       
-      println(input)
-
       if ( input.<:<( seq_any_type ) && typeOf[Seq[Nothing]].<:<( input ) ) {
         val actual_type = first_type_parameter.asSeenFrom( input, seq_class_symbol )
-
-        println( actual_type )
 
         AbstractTranslator.useTranslators( context )( actual_type, translators ) match {
           case Some( ( sl_type, imports, expr_s2j, expr_j2s ) ) =>
