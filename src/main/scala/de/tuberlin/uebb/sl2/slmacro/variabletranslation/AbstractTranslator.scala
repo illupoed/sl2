@@ -60,6 +60,8 @@ object AbstractTranslator {
   def preludeTranslators(): Seq[AbstractTranslator] = Seq(
     new FloatTranslator,
     new DoubleTranslator,
+    new ByteTranslator,
+    new ShortTranslator,
     new IntTranslator,
     new LongTranslator,
     new CharTranslator,

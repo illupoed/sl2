@@ -11,7 +11,7 @@ object AbstractModulTranslator {
     {
       val translators = allModulTranslators()
 
-      for ( t <- translators if ( t.import_path == path ) ) yield { t }
+      for ( t <- translators if ( t.import_path == path ) ) yield { t.rename(name) }
     }
 
   /**
@@ -21,7 +21,7 @@ object AbstractModulTranslator {
    * 
    * TODO get all subclasses (die keine abstrakten Klassen sind)
    */
-  def allModulTranslators(): Seq[AbstractModulTranslator] = Seq( new OptionTranslator() )
+  def allModulTranslators(): Seq[AbstractModulTranslator] = Seq( new OptionTranslator(), new SeqTranslator())
 }
 
 /**
