@@ -52,7 +52,7 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 
 /**
- * Driver for the `slc' macro.
+ * Driver for the `slci' macro.
  */
 object MacroDriver
     extends CombinatorParser
@@ -133,7 +133,7 @@ object MacroDriver
             getClassAndFunctionFromGeneratedSLFile( sl_import.path ) match {
               case Left( err_msg ) => c.abort( c.enclosingPosition, err_msg )
               case Right( ( class_path, function_name ) ) => {
-                println( class_path )
+                //println( class_path )
                 renderFunctionImport( class_path, function_name )
               }
             }
@@ -149,7 +149,7 @@ object MacroDriver
           {
               def helper( class_path: Seq[String] ): c.Tree =
                 {
-                  println( class_path )
+                  //println( class_path )
 
                   if ( class_path.length == 1 )
                     Ident( newTermName( class_path.head ) )
@@ -159,11 +159,10 @@ object MacroDriver
                       newTermName( class_path.head )
                     )
                 }
-              val rand = new Random()
-            val function_alias: String = "fun" + rand.nextInt(9) + rand.nextInt(9) + rand.nextInt(9) + rand.nextInt(9) + rand.nextInt(9) + rand.nextInt(9) + rand.nextInt(9) + rand.nextInt(9) + rand.nextInt(9) + rand.nextInt(9) + rand.nextInt(9) 
+            val rand = new Random()
+            val function_alias: String = "fun" + rand.nextInt( 9 ) + rand.nextInt( 9 ) + rand.nextInt( 9 ) + rand.nextInt( 9 ) + rand.nextInt( 9 ) + rand.nextInt( 9 ) + rand.nextInt( 9 ) + rand.nextInt( 9 ) + rand.nextInt( 9 ) + rand.nextInt( 9 )
             val class_path_splitted = class_path.split( "\\." ).reverse.toSeq
-            for ( i <- class_path_splitted )
-              println( i )
+            //for ( i <- class_path_splitted ) println( i )
 
             c.universe.Import(
               helper( class_path_splitted ),
@@ -346,8 +345,6 @@ object MacroDriver
                 // we import the used scala functions (via sl annotation macro) into the block (to make sure that if the signature of that function changes we recompile this block/file)
                 val imports = renderFunctionImports( sl_imports )
 
-                println( imports )
-
                 println( "----- Compiled " + module_name + " -----------------" )
                 c.Expr[String]( q"{import de.tuberlin.uebb.sl2.impl._; ..$imports ; $require.format (..$expr_list) }" )
               }
@@ -363,19 +360,19 @@ object MacroDriver
   /**
    * helper returning sl code for a constant function
    */
-  def renderSLDef( sl_val_name: String, sl_val_type: String, js_val_name: String ): String =
+  private def renderSLDef( sl_val_name: String, sl_val_type: String, js_val_name: String ): String =
     { f"\n\nFUN $sl_val_name%s : $sl_val_type%s\nDEF EXTERN $sl_val_name%s = {| sl['$js_val_name%s'] |}" }
 
   /**
    * helper returning js of a variable definition
    */
-  def renderJSDef( js_val_name: String ): String =
+  private def renderJSDef( js_val_name: String ): String =
     { f"\nsl['$js_val_name%s'] = %%s;" }
 
   /**
    * calculates the md5 hash of a string
    */
-  def md5( input: String ): String = {
+  private def md5( input: String ): String = {
     val ar = MessageDigest.getInstance( "MD5" ).digest( input.getBytes() )
 
     ar.foldLeft( "" )( ( x, y ) => x + String.format( "%x", new Integer( y & 0xff ) ) )
@@ -387,7 +384,7 @@ object MacroDriver
    * @param filepath eg. /tmp/foo.sl
    * @param content the content of the file
    */
-  def writeSlToFile( filepath: String, content: String ): Unit = {
+  private def writeSlToFile( filepath: String, content: String ): Unit = {
     import scalax.file.Path
 
     val file = Path.fromString( filepath )
@@ -410,17 +407,16 @@ object MacroDriver
   /**
    * generates the js to include the sl code
    */
-  def renderRequire( module_name: String ): String =
+  private def renderRequire( module_name: String ): String =
     {
-
       f"""
 require
-	( [ "$inline_sl_macro_folder%s/$module_name%s.sl" ]
-	, function (foo)
-		{
-			foo.$$main()
-		}
-	);
+  ( [ "$inline_sl_macro_folder%s$module_name%s.sl" ]
+  , function (tmp)
+    {
+      tmp.$$main();
+    }
+  );
 """
     }
 
@@ -429,7 +425,7 @@ require
    *
    * @see http://rosettacode.org/wiki/Count_occurrences_of_a_substring#Scala
    */
-  def countSubstring( haystack: String, needle: String ): Int = {
+  private def countSubstring( haystack: String, needle: String ): Int = {
       @tailrec def count( pos: Int, c: Int ): Int = {
         val idx = haystack indexOf ( needle, pos )
         if ( idx == -1 )
@@ -445,7 +441,7 @@ require
    *
    * @param source_code sl code
    */
-  def loadTranslatorsFromDependencies( sl_imports: Seq[QualifiedImport] ): Seq[AbstractTranslator] =
+  private def loadTranslatorsFromDependencies( sl_imports: Seq[QualifiedImport] ): Seq[AbstractTranslator] =
     {
       import de.tuberlin.uebb.sl2.slmacro.variabletranslation
 
@@ -460,7 +456,7 @@ require
    * This function returns these values
    * counterpart of this function is sl_function.defineSlFile()
    */
-  def getClassAndFunctionFromGeneratedSLFile( import_path: String ): Either[String, Pair[String, String]] =
+  private def getClassAndFunctionFromGeneratedSLFile( import_path: String ): Either[String, Pair[String, String]] =
     {
       val absolut_path = assets_dir + import_path + ".sl"
       try {
