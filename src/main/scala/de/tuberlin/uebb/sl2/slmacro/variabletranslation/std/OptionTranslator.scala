@@ -53,8 +53,6 @@ case class OptionTranslator( override val module_alias: String = "Opt" ) extends
       if ( input.<:<( option_any_type ) ) {
         val actual_type = first_type_parameter.asSeenFrom( input, option_class_symbol )
 
-        println( actual_type )
-
         AbstractTranslator.useTranslators( context )( actual_type, translators ) match {
           case Some( ( sl_type, imports, expr_s2j, expr_j2s ) ) =>
             {

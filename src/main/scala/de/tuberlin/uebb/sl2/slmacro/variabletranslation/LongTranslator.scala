@@ -7,7 +7,12 @@ import scala.math.BigInt
 object LongTranslator {
   def scalaToJsInt( i: Any ): JValue =
     {
-      JInt( BigInt( i.asInstanceOf[Long] ) )
+      val input = i.asInstanceOf[Long];
+
+      if ( input > ( 2 ^ 53 - 1 ) || input < -( 2 ^ 53 - 1 ) )
+        throw new IllegalArgumentException
+      else
+        JInt( BigInt( i.asInstanceOf[Long] ) )
     }
 
   def jsToScalaInt( input: JValue ): Long =

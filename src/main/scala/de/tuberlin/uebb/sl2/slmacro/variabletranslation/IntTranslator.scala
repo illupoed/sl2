@@ -38,10 +38,8 @@ class IntTranslator extends AbstractTranslator {
           reify( { de.tuberlin.uebb.sl2.slmacro.variabletranslation.IntTranslator.jsToScalaInt } )
         ) )
       }
-      else
-      {
-        println(input)
-    	  None
+      else {
+        None
       }
     }
 }
