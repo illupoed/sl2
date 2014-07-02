@@ -326,6 +326,7 @@ object MacroDriver
               , new File( "" ) // mainParent
               , new File( assets_dir ) // destination
               , false // generate a html file?
+              , true // main function required?
               )
 
               // compile sl code

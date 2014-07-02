@@ -76,12 +76,10 @@ trait MultiDriver extends Driver {
         ensureDirExists( config.destination )
 
         // compile in topological order
-        val result =
-          ( for (
-            modules <- sortedModules.right; results <- errorMap( modules.toSeq.toList, handleSource( _: Module, config )
-            ).right
-          ) yield ""
-          )
+        val result = for (
+          modules <- sortedModules.right;
+          results <- errorMap( modules.toSeq.toList, handleSource( _: Module, config ) ).right
+        ) yield ""
 
         if ( result.isLeft ) {
           result
@@ -251,19 +249,23 @@ trait MultiDriver extends Driver {
       val code = module.source.contents
 
       for (
-        moq_compiled <- ( compile( name, code, config ).right ); res <- { // output to fs
+        moq_compiled <- ( compile( name, code, config ).right );
+        res <- { // output to fs
           val ( moq, compiled ) = moq_compiled;
 
-          for {
-            res <- outputToFiles( moq, name, compiled, config ).right;
-            // create main.js while compiling main unit only if a main function is declared
-            _ <- {
-              if ( isMain && moq.functionDefs.contains( "main" ) )
-                generateMainJsFile( name, config ).right
-              else
-                Right( "No Main needed" ).right
-            }
-          } yield res
+          if ( isMain && inputConfig.main_function_is_required && !moq.functionDefs.contains( "main" ) )
+            Left( GenericError( f"A 'main' function definition is required!" ) )
+          else
+            for {
+              res <- outputToFiles( moq, name, compiled, config ).right;
+              // create main.js while compiling main unit only if a main function is declared
+              _ <- {
+                if ( isMain && moq.functionDefs.contains( "main" ) )
+                  generateMainJsFile( name, config ).right
+                else
+                  Right( "No Main needed" ).right
+              }
+            } yield res
         }.right
       ) yield res
     }

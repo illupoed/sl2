@@ -32,8 +32,17 @@ trait Configs {
      */
     val destination: File,
     /**
-     * should the multidriver create an html file to execute the sl code in a browser
-     * the multidriver should still copy library files to the classpath folder
+     * should the multidriver create an html file to execute the sl code in a browser or via nodejs
+     * the MultiDriver should still copy library files to the classpath folder
+     * 
+     * this option is only used by the MultiDriver/MacroDriver
      */
-    val generate_index_html: Boolean = true )
+    val generate_index_html: Boolean = true,
+    /**
+     * if this is set to true all files in sources should contain a main function
+     * 
+     * this field is only used by the MultiDriver/MacroDriver
+     */
+    val main_function_is_required: Boolean = false
+    )
 }
