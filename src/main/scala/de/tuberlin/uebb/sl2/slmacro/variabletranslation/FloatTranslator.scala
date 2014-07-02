@@ -10,7 +10,7 @@ object FloatTranslator {
     {
       input match {
         case JDouble( x ) => {
-          if ( ( x <= Float.MaxValue && x >= Float.MinValue ) || x == Float.NaN || x == Float.NegativeInfinity || x == Float.PositiveInfinity )
+          if ( ( x <= Float.MaxValue && x >= Float.MinValue ) || x.isNaN() || x.isInfinity )
             x.toFloat
           else
             throw new IllegalArgumentException

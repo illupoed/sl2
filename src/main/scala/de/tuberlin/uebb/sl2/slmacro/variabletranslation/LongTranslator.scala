@@ -5,17 +5,18 @@ import org.json4s._
 import scala.math.BigInt
 
 object LongTranslator {
-  def scalaToJsInt( i: Any ): JValue =
+  def scalaToJsLong( i: Any ): JValue =
     {
       val input = i.asInstanceOf[Long];
+      val maxValue = (BigInt( 2 ).pow( 53 ) - 1).toLong
 
-      if ( input > ( 2 ^ 53 - 1 ) || input < -( 2 ^ 53 - 1 ) )
+      if ( input > maxValue || input < - maxValue )
         throw new IllegalArgumentException
       else
         JInt( BigInt( i.asInstanceOf[Long] ) )
     }
 
-  def jsToScalaInt( input: JValue ): Long =
+  def jsToScalaLong( input: JValue ): Long =
     {
       input match {
         case JInt( x ) => {
@@ -39,8 +40,8 @@ class LongTranslator extends AbstractTranslator {
         Some( (
           "Int",
           Set( module_import() ),
-          reify( { de.tuberlin.uebb.sl2.slmacro.variabletranslation.LongTranslator.scalaToJsInt } ),
-          reify( { de.tuberlin.uebb.sl2.slmacro.variabletranslation.LongTranslator.jsToScalaInt } )
+          reify( { de.tuberlin.uebb.sl2.slmacro.variabletranslation.LongTranslator.scalaToJsLong } ),
+          reify( { de.tuberlin.uebb.sl2.slmacro.variabletranslation.LongTranslator.jsToScalaLong } )
         ) )
       }
       else
