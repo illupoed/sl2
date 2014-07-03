@@ -21,8 +21,6 @@ trait StringTranslatorSpec extends FunSpec with ShouldMatchers {
         |Nullam ornare, risus vel euismod hendrerit, lorem magna rutrum massa, eget volutpat nisi leo a massa. In vehicula, erat a bibendum lobortis, augue nibh ultrices eros, in volutpat elit nulla ut enim. Aliquam erat sem, congue nec porttitor et, mattis ac turpis. Aenean quis augue et massa commodo sagittis. Interdum et malesuada fames ac ante ipsum primis in faucibus. Maecenas ipsum odio, venenatis eget facilisis ut, ullamcorper quis tellus. Vestibulum consequat dui erat, ac porttitor lectus fringilla a. Fusce adipiscing elit eu quam aliquet pellentesque. Donec turpis sem, pharetra sit amet hendrerit ut, posuere congue ligula. Nam quis nulla vulputate, ultricies orci ac, dictum turpis. Morbi porttitor est sapien, ac lobortis tortor sollicitudin et. Donec ultrices tristique feugiat.
         |""".stripMargin
 
-    println( very_long_string )
-
     it( "Should be bijective (empty String)" ) {
       StringTranslator.jsToScalaString( StringTranslator.scalaToJsString( empty_string ) ) == empty_string
     }
