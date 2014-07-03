@@ -6,7 +6,7 @@ import org.json4s._
 object StringTranslator {
   def scalaToJsString( i: Any ): JValue = JString( i.asInstanceOf[String] )
 
-  def jsToScalaSting( input: JValue ): String =
+  def jsToScalaString( input: JValue ): String =
     {
       input match {
         case JString( x ) => x
@@ -26,7 +26,7 @@ class StringTranslator extends AbstractTranslator {
             "String",
             Set(module_import()),
             reify( { de.tuberlin.uebb.sl2.slmacro.variabletranslation.StringTranslator.scalaToJsString } ),
-            reify( { de.tuberlin.uebb.sl2.slmacro.variabletranslation.StringTranslator.jsToScalaSting } )
+            reify( { de.tuberlin.uebb.sl2.slmacro.variabletranslation.StringTranslator.jsToScalaString } )
         ) )
       }
       else

@@ -5,12 +5,12 @@ import org.json4s._
 import scala.reflect.macros.Context
 
 object UnitTranslator {
-  def scalaToJsVoid( input: Any ): JValue = JInt( 0 )
+  def scalaToJsUnit( input: Any ): JValue = JInt( 0 )
 
-  def jsToScalaVoid( input: JValue ): Unit =
+  def jsToScalaUnit( input: JValue ): Unit =
     {
       input match {
-        case JInt( x ) if (x == 0) => Unit
+        case JInt( x ) if (x == 0) => return;
         case _ => throw new IllegalArgumentException
       }
     }
@@ -26,8 +26,8 @@ class UnitTranslator extends AbstractTranslator {
         Some( (
             "Void",
             Set(module_import()),
-            reify( { import de.tuberlin.uebb.sl2.slmacro.variabletranslation; UnitTranslator.scalaToJsVoid } ),
-            reify( { import de.tuberlin.uebb.sl2.slmacro.variabletranslation; UnitTranslator.jsToScalaVoid } )
+            reify( { import de.tuberlin.uebb.sl2.slmacro.variabletranslation; UnitTranslator.scalaToJsUnit } ),
+            reify( { import de.tuberlin.uebb.sl2.slmacro.variabletranslation; UnitTranslator.jsToScalaUnit } )
             )
         )
       }
