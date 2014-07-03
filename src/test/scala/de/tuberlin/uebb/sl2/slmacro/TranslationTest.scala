@@ -7,6 +7,9 @@ import de.tuberlin.uebb.sl2.slmacro.variabletranslation.ByteTranslatorSpec
 import de.tuberlin.uebb.sl2.slmacro.variabletranslation.IntTranslatorSpec
 import de.tuberlin.uebb.sl2.slmacro.variabletranslation.LongTranslatorSpec
 import de.tuberlin.uebb.sl2.slmacro.variabletranslation.BooleanTranslatorSpec
+import de.tuberlin.uebb.sl2.slmacro.variabletranslation.StringTranslatorSpec
+import de.tuberlin.uebb.sl2.slmacro.variabletranslation.CharTranslatorSpec
+import de.tuberlin.uebb.sl2.slmacro.variabletranslation.UnitTranslatorSpec
 
 class TranslationTest
     extends FloatTranslatorSpec
@@ -15,6 +18,9 @@ class TranslationTest
     with ByteTranslatorSpec
     with IntTranslatorSpec
     with LongTranslatorSpec
-    with BooleanTranslatorSpec{
+    with BooleanTranslatorSpec
+    with StringTranslatorSpec
+    with CharTranslatorSpec
+    with UnitTranslatorSpec {
 
 }
