@@ -10,6 +10,8 @@ import de.tuberlin.uebb.sl2.slmacro.variabletranslation.BooleanTranslatorSpec
 import de.tuberlin.uebb.sl2.slmacro.variabletranslation.StringTranslatorSpec
 import de.tuberlin.uebb.sl2.slmacro.variabletranslation.CharTranslatorSpec
 import de.tuberlin.uebb.sl2.slmacro.variabletranslation.UnitTranslatorSpec
+import de.tuberlin.uebb.sl2.slmacro.variabletranslation.std.SeqTranslatorSpec
+import de.tuberlin.uebb.sl2.slmacro.variabletranslation.std.OptionTranslatorSpec
 
 class TranslationTest
     extends FloatTranslatorSpec
@@ -21,6 +23,8 @@ class TranslationTest
     with BooleanTranslatorSpec
     with StringTranslatorSpec
     with CharTranslatorSpec
-    with UnitTranslatorSpec {
+    with UnitTranslatorSpec
+    with SeqTranslatorSpec
+    with OptionTranslatorSpec {
 
 }
