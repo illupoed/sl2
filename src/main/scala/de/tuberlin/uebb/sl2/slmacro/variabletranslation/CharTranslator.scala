@@ -10,7 +10,7 @@ object CharTranslator {
     {
       input match {
         case JString( x ) => {
-          if ( x.length() != 0 )
+          if ( x.length() == 1 )
             x.charAt( 0 )
           else
             throw new IllegalArgumentException
