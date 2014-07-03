@@ -5,25 +5,25 @@ import org.scalatest.matchers._
 import de.tuberlin.uebb.sl2.slmacro.variabletranslation.ShortTranslator._
 import org.json4s._
 
-trait ShortTranslatorTest extends FunSpec with ShouldMatchers {
+trait ShortTranslatorSpec extends FunSpec with ShouldMatchers {
 
   describe( "ShortTranslator" + "Test case 1: Value translation tests" ) {
-    it( "Should be bijectiv (0.0)" ) {
+    it( "Should be bijective (0.0)" ) {
       val tmp: Short = 0
       ShortTranslator.jsToScalaShort( ShortTranslator.scalaToJsShort( tmp ) ) == tmp
     }
 
-    it( "Should be bijectiv (Short.MaxValue)" ) {
+    it( "Should be bijective (Short.MaxValue)" ) {
       val tmp = Short.MaxValue
       ShortTranslator.jsToScalaShort( ShortTranslator.scalaToJsShort( tmp ) ) == tmp
     }
 
-    it( "Should be bijectiv (Short.MinValue)" ) {
+    it( "Should be bijective (Short.MinValue)" ) {
       val tmp = Short.MinValue
       ShortTranslator.jsToScalaShort( ShortTranslator.scalaToJsShort( tmp ) ) == tmp
     }
 
-    it( "Should be bijectiv (other way round 1.0)" ) {
+    it( "Should be bijective (other way round 1.0)" ) {
       val tmp = JInt( 1 )
       ShortTranslator.scalaToJsShort( ShortTranslator.jsToScalaShort( tmp ) ) == tmp
     }

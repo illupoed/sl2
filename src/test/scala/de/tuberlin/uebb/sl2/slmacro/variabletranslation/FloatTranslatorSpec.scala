@@ -5,40 +5,40 @@ import org.scalatest.matchers._
 import de.tuberlin.uebb.sl2.slmacro.variabletranslation.FloatTranslator._
 import org.json4s._
 
-trait FloatTranslatorTest extends FunSpec with ShouldMatchers {
+trait FloatTranslatorSpec extends FunSpec with ShouldMatchers {
 
   describe( "FloatTranslator" + "Test case 1: Value translation tests" ) {
-    it( "Should be bijectiv (0.0)" ) {
+    it( "Should be bijective (0.0)" ) {
       val tmp: Float = 0.0f
       FloatTranslator.jsToScalaReal( FloatTranslator.scalaToJsReal( tmp ) ) == tmp
     }
 
-    it( "Should be bijectiv (Float.MaxValue)" ) {
+    it( "Should be bijective (Float.MaxValue)" ) {
       val tmp: Float = Float.MaxValue
       FloatTranslator.jsToScalaReal( FloatTranslator.scalaToJsReal( tmp ) ) == tmp
     }
 
-    it( "Should be bijectiv (Float.MinValue)" ) {
+    it( "Should be bijective (Float.MinValue)" ) {
       val tmp: Float = Float.MinValue
       FloatTranslator.jsToScalaReal( FloatTranslator.scalaToJsReal( tmp ) ) == tmp
     }
 
-    it( "Should be bijectiv (Float.NaN)" ) {
+    it( "Should be bijective (Float.NaN)" ) {
       val tmp: Float = Float.NaN
       FloatTranslator.jsToScalaReal( FloatTranslator.scalaToJsReal( tmp ) ) == tmp
     }
 
-    it( "Should be bijectiv (Float.PositiveInfinity)" ) {
+    it( "Should be bijective (Float.PositiveInfinity)" ) {
       val tmp: Float = Float.PositiveInfinity
       FloatTranslator.jsToScalaReal( FloatTranslator.scalaToJsReal( tmp ) ) == tmp
     }
 
-    it( "Should be bijectiv (Float.NegativeInfinity)" ) {
+    it( "Should be bijective (Float.NegativeInfinity)" ) {
       val tmp: Float = Float.NegativeInfinity
       FloatTranslator.jsToScalaReal( FloatTranslator.scalaToJsReal( tmp ) ) == tmp
     }
 
-    it( "Should be bijectiv (other way round 1.0)" ) {
+    it( "Should be bijective (other way round 1.0)" ) {
       val tmp = JDouble( 1.0 )
       FloatTranslator.scalaToJsReal( FloatTranslator.jsToScalaReal( tmp ) ) == tmp
     }
