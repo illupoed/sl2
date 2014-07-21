@@ -20,7 +20,7 @@ trait MacroConfig {
   /**
    * shape of placeholder in sl code for scala variables
    */
-  val scala_var_placeholder = "$s"
+  val scala_var_placeholder = "#s"
 
   /**
    * default directory separator
