@@ -19,12 +19,12 @@ trait BooleanTranslatorSpec extends FunSpec with ShouldMatchers {
     }
 
     it( "Should be bijective (other way round true)" ) {
-      val tmp = JBool(true)
+      val tmp = JBool( true )
       BooleanTranslator.scalaToJsBool( BooleanTranslator.jsToScalaBool( tmp ) ) == tmp
     }
-    
+
     it( "Should be bijective (other way round false)" ) {
-      val tmp = JBool(true)
+      val tmp = JBool( true )
       BooleanTranslator.scalaToJsBool( BooleanTranslator.jsToScalaBool( tmp ) ) == tmp
     }
 
