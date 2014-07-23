@@ -33,9 +33,9 @@ object EitherTranslator {
           val cid = x.find( j => ( j._1 == "_cid" ) )
           val var0 = x.find( j => ( j._1 == "_var0" ) )
           if ( var0.isDefined && cid.isDefined ) {
-            if ( cid.get._2 == 0 )
+            if ( AbstractModulTranslator.isIntAndHasValue(cid.get._2, 0) )
               return Left( f( var0.get._2 ) )
-            if ( cid.get._2 == 1 )
+            if ( AbstractModulTranslator.isIntAndHasValue(cid.get._2, 1) )
               return Right( g( var0.get._2 ) )
             else
               throw new IllegalArgumentException

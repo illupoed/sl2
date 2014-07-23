@@ -29,7 +29,11 @@ object Tuple2Translator {
           val cid = x.find( j => ( j._1 == "_cid" ) )
           val var0 = x.find( j => ( j._1 == "_var0" ) )
           val var1 = x.find( j => ( j._1 == "_var1" ) )
-          if ( var0.isDefined && cid.isDefined && var1.isDefined && cid.get._2 == 0 ) {
+
+          if ( var0.isDefined &&
+            cid.isDefined &&
+            var1.isDefined &&
+            AbstractModulTranslator.isIntAndHasValue( cid.get._2, 0 ) ) {
             Tuple2( f( var0.get._2 ), g( var1.get._2 ) )
           }
           else
@@ -39,7 +43,6 @@ object Tuple2Translator {
       }
     }
 }
-
 
 case class Tuple2Translator( override val module_alias: String = "Pair" ) extends AbstractModulTranslator( module_alias ) {
   val import_path = "std/pair"

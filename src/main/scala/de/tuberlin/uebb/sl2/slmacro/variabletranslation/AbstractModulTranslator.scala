@@ -1,37 +1,49 @@
 package de.tuberlin.uebb.sl2.slmacro.variabletranslation
 
 import de.tuberlin.uebb.sl2.slmacro.variabletranslation.std._
+import org.json4s._
+import scala.math.BigInt
 
 object AbstractModulTranslator {
 
   /**
-   * returns for an sl module (depending on its path) all 
+   * returns for an sl module (depending on its path) all
    */
   def resolveImport( path: String, name: String ): Seq[AbstractModulTranslator] =
     {
       val translators = allModulTranslators()
 
-      for ( t <- translators if ( t.import_path == path ) ) yield { t.rename(name) }
+      for ( t <- translators if ( t.import_path == path ) ) yield { t.rename( name ) }
     }
 
   /**
    * returns all Translators for Modules
    *
    * TODO in the future this should be done by reflection | get all Classes which extend AbstractTranslator
-   * 
+   *
    * TODO get all subclasses (die keine abstrakten Klassen sind)
    */
-  def allModulTranslators(): Seq[AbstractModulTranslator] = Seq( new OptionTranslator(), new SeqTranslator(), new EitherTranslator(), new Tuple2Translator())
+  def allModulTranslators(): Seq[AbstractModulTranslator] = Seq( new OptionTranslator(), new SeqTranslator(), new EitherTranslator(), new Tuple2Translator() )
+
+  /**
+   * helper function
+   */
+  def isIntAndHasValue( i: JValue, n: Int ): Boolean = {
+    i match {
+      case JInt( x ) => x == n
+      case _ => false
+    }
+  }
 }
 
 /**
- *  
- * 
+ *
+ *
  * @param module_alias all subclasses have to define a default for module_alias
  * Attention: translators which translate data types in the same module must have the same module_alias!!!
- * eg.: the module foo.sl defines the public types Bar and Baz then you have to create the translators like 
- * BarTranslator( override val module_alias: String = "Foo" ) and BazTranslator( override val module_alias: String = "Foo" ) 
- * 
+ * eg.: the module foo.sl defines the public types Bar and Baz then you have to create the translators like
+ * BarTranslator( override val module_alias: String = "Foo" ) and BazTranslator( override val module_alias: String = "Foo" )
+ *
  * TODO complete the comments
  */
 abstract class AbstractModulTranslator( override val module_alias: String ) extends AbstractTranslator {

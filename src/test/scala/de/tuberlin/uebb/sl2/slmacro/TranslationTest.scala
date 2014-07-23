@@ -12,19 +12,21 @@ import de.tuberlin.uebb.sl2.slmacro.variabletranslation.CharTranslatorSpec
 import de.tuberlin.uebb.sl2.slmacro.variabletranslation.UnitTranslatorSpec
 import de.tuberlin.uebb.sl2.slmacro.variabletranslation.std.SeqTranslatorSpec
 import de.tuberlin.uebb.sl2.slmacro.variabletranslation.std.OptionTranslatorSpec
+import de.tuberlin.uebb.sl2.slmacro.variabletranslation.std.EitherTranslatorSpec
+import de.tuberlin.uebb.sl2.slmacro.variabletranslation.std.Tuple2TranslatorSpec
 
 class TranslationTest
-    extends FloatTranslatorSpec
-    with DoubleTranslatorSpec
-    with ShortTranslatorSpec
-    with ByteTranslatorSpec
-    with IntTranslatorSpec
-    with LongTranslatorSpec
-    with BooleanTranslatorSpec
-    with StringTranslatorSpec
-    with CharTranslatorSpec
-    with UnitTranslatorSpec
-    with SeqTranslatorSpec
-    with OptionTranslatorSpec {
-
-}
+  extends FloatTranslatorSpec
+  with DoubleTranslatorSpec
+  with ShortTranslatorSpec
+  with ByteTranslatorSpec
+  with IntTranslatorSpec
+  with LongTranslatorSpec
+  with BooleanTranslatorSpec
+  with StringTranslatorSpec
+  with CharTranslatorSpec
+  with UnitTranslatorSpec
+  with SeqTranslatorSpec
+  with OptionTranslatorSpec
+  with EitherTranslatorSpec
+  with Tuple2TranslatorSpec {}
