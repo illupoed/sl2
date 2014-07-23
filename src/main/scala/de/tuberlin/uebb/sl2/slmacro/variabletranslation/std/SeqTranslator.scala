@@ -61,7 +61,7 @@ case class SeqTranslator( override val module_alias: String = "SeqList" ) extend
               // q"foo" is not possible because you can not use functions (Expr[Any => String]) in parameter lists
               val scala2js = reify( { ( i: Any ) => de.tuberlin.uebb.sl2.slmacro.variabletranslation.std.SeqTranslator.scalaToJsSeq( i, expr_s2j.splice ) } )
               val js2scala = reify( { ( i: JValue ) => de.tuberlin.uebb.sl2.slmacro.variabletranslation.std.SeqTranslator.jsToScalaSeq( i, expr_j2s.splice ) } )
-              Some( ( module_alias + ".List ( " + sl_type + " )", imports + module_import, scala2js, js2scala ) )
+              Some( ( f" ($module_alias%s.List $sl_type%s) ", imports + module_import, scala2js, js2scala ) )
             }
           case None =>
             None

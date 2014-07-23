@@ -60,7 +60,7 @@ case class OptionTranslator( override val module_alias: String = "Opt" ) extends
               // q"foo" is not possible because you can not use functions (Expr[Any => String]) in parameter lists
               val scala2js = reify( { ( i: Any ) => de.tuberlin.uebb.sl2.slmacro.variabletranslation.std.OptionTranslator.scalaToJsOption( i, expr_s2j.splice ) } )
               val js2scala = reify( { ( i: JValue ) => de.tuberlin.uebb.sl2.slmacro.variabletranslation.std.OptionTranslator.jsToScalaOption( i, expr_j2s.splice ) } )
-              Some( ( module_alias + ".Option ( " + sl_type + " )", imports + module_import, scala2js, js2scala ) )
+              Some( ( f" ($module_alias%s.Option $sl_type%s) ", imports + module_import, scala2js, js2scala ) )
             }
           case None =>
             None
