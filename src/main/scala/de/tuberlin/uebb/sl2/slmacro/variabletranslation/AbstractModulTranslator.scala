@@ -21,7 +21,7 @@ object AbstractModulTranslator {
    * 
    * TODO get all subclasses (die keine abstrakten Klassen sind)
    */
-  def allModulTranslators(): Seq[AbstractModulTranslator] = Seq( new OptionTranslator(), new SeqTranslator())
+  def allModulTranslators(): Seq[AbstractModulTranslator] = Seq( new OptionTranslator(), new SeqTranslator(), new EitherTranslator(), new Tuple2Translator())
 }
 
 /**
@@ -37,8 +37,7 @@ object AbstractModulTranslator {
 abstract class AbstractModulTranslator( override val module_alias: String ) extends AbstractTranslator {
 
   override final def module_import(): String = {
-    f"""IMPORT "$import_path%s" AS $module_alias%s
-"""
+    f"""IMPORT "$import_path%s" AS $module_alias%s"""
   }
 
   /**
