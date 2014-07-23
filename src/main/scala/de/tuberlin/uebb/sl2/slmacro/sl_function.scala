@@ -137,7 +137,7 @@ object sl_function
        * @param result_converte the AST of the function ScalaToSlResultType in the example
        */
       def createHelperFunction( fun_name: c.universe.Name, param_converter: Seq[c.Expr[JValue => Any]], params: Seq[c.Type], result_converter: c.Expr[Any => JValue] ): c.Expr[Any] = {
-        val helper_name = newTermName( fun_name.decoded + "_sl_helper" )
+        val helper_name = newTermName( fun_name.decoded + helper_function_postfix )
         var i = 0;
 
         val tmp: Seq[Pair[c.universe.ValDef, c.universe.Tree]] = for ( x <- param_converter.zip( params ) ) yield {
@@ -283,10 +283,10 @@ $helper_fun
 -- this functions should call the scala function:
 -- $class_path%s.$fun_name%s
 PUBLIC FUN $fun_name%sSync : $parameter_type_string%s DOM ( Opt.Option ($target_type%s) )
-DEF $fun_name%sSync$sl_param_names%s = {| _sendRequestSync("$inline_sl_macro_handler_uri%s", "$class_path%s", "$fun_name%s_sl_helper") ($sl_param_brace%s) |} : DOM ( Opt.Option ($target_type%s) )
+DEF $fun_name%sSync$sl_param_names%s = {| _sendRequestSync("$inline_sl_macro_handler_uri%s", "$class_path%s", "$fun_name%s$helper_function_postfix%s") ($sl_param_brace%s) |} : DOM ( Opt.Option ($target_type%s) )
 
 PUBLIC FUN $fun_name%sAsync : ( Opt.Option ($target_type%s) -> DOM Void ) -> $parameter_type_string%s DOM Void
-DEF $fun_name%sAsync callbackFun$sl_param_names%s = {| _sendRequestAsync("$inline_sl_macro_handler_uri%s", "$class_path%s", "$fun_name%s_sl_helper") ($sl_param_brace_async%s) |} : DOM Void
+DEF $fun_name%sAsync callbackFun$sl_param_names%s = {| _sendRequestAsync("$inline_sl_macro_handler_uri%s", "$class_path%s", "$fun_name%s$helper_function_postfix%s") ($sl_param_brace_async%s) |} : DOM Void
 """
     }
 
@@ -430,4 +430,31 @@ $body%s
     file.write( content )
   }
 
+}
+
+trait InvokeHelper extends MacroConfig{
+  /**
+   * Invokes a method of an object by its name
+   *
+   * this should help the controller to call the right function
+   *
+   * this method can only call methods of type String* -> String
+   * (because this is the only use case i have)
+   *
+   * @see https://stackoverflow.com/questions/1913092/getting-object-instance-by-string-name-in-scala
+   * @see https://stackoverflow.com/questions/2060395/is-there-any-scala-feature-that-allows-you-to-call-a-method-whose-name-is-stored
+   *
+   * @example invokeObjectMethodByName("main.bar.Woot", "fac", "10")
+   */
+  def invokeObjectMethodByName( object_name_with_path: String, function_name: String, params: JValue* ): JValue =
+    {
+      if (!function_name.endsWith(helper_function_postfix))
+        throw new SecurityException
+    
+      val c = Class.forName( object_name_with_path + "$" )
+      val clazz = c.getField( "MODULE$" ).get( c )
+      val param_classes = params.map( ( _ ) => classOf[JValue] /*_.getClass()*/ )
+
+      clazz.getClass.getMethod( function_name, param_classes: _* ).invoke( clazz, params: _* ).asInstanceOf[JValue]
+    }
 }
